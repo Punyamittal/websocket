@@ -1,0 +1,1176 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Dashboard - SecureDrop</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <!-- Hamburger Navbar -->
+  <nav class="navbar">
+    <div class="navbar-container">
+      <div class="navbar-header">
+        <h2 class="navbar-title">SecureDrop</h2>
+        <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+      <div class="navbar-menu" id="navbarMenu">
+        <a href="#" class="nav-item" id="navHome" onclick="showDashboard(); return false;">
+          Dashboard
+        </a>
+        <a href="#" class="nav-item" id="navUpload" onclick="showUpload(); return false;">
+          Upload
+        </a>
+        <a href="#" class="nav-item" id="navFiles" onclick="showFiles(); return false;">
+          <span>📁</span> My Files
+        </a>
+        <a href="#" class="nav-item" id="navChat" onclick="showChat(); return false;">
+          <span>💬</span> Chat
+        </a>
+        <div class="nav-item nav-item-collapsible" id="navCollapsible" onclick="toggleCollapsible(); return false;">
+          Settings
+          <span class="arrow">▼</span>
+        </div>
+        <div class="submenu" id="submenu">
+          <a href="#" class="nav-item submenu-item" onclick="showRecipient(); return false;">
+            Recipient
+          </a>
+          <a href="#" class="nav-item submenu-item" onclick="showPin(); return false;">
+            Pin
+          </a>
+          <a href="#" class="nav-item submenu-item" onclick="showSend(); return false;">
+            Send
+          </a>
+        </div>
+        <a href="/logout" class="nav-item nav-item-logout">
+          Logout
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="card" style="max-width:900px;margin:28px auto;margin-top:80px">
+    <header style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+      <div>
+        <h2 id="pageTitle">Dashboard</h2>
+        <p class="small muted" id="welcomeText">Welcome!</p>
+      </div>
+    </header>
+
+    <!-- Dashboard Content -->
+    <div id="dashboardContent" style="display:none;">
+      <div id="loading" class="muted">Loading...</div>
+      
+      <div id="dashboardMain" style="display:none;">
+        <div style="margin-bottom:24px">
+          <h3>Pending Files</h3>
+          <div id="pendingFiles" class="file-list">
+            <p class="muted small">No pending files.</p>
+          </div>
+        </div>
+
+        <div>
+          <h3>Approved Files</h3>
+          <div id="approvedFiles" class="file-list">
+            <p class="muted small">No approved files.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upload Section -->
+    <div id="uploadContent" style="display:none;">
+      <h3>Upload File</h3>
+      <form id="uploadForm" class="form" enctype="multipart/form-data">
+        <label>Receiver username
+          <input name="receiver" id="receiverInput" required />
+        </label>
+        <label>Receiver 4-digit PIN
+          <input name="pin" id="pinInput" required pattern="\d{4}" title="4 digits" />
+        </label>
+        <label>Sender name (optional)
+          <input name="sender" id="senderInput" placeholder="Anonymous" />
+          </label>
+        <label>File
+          <input type="file" name="file" id="fileInput" required />
+          </label>
+        <div class="form-row">
+          <button class="btn primary" type="submit">Upload</button>
+          <div id="uploadMsg" class="muted small"></div>
+        </div>
+        </form>
+    </div>
+
+    <!-- My Files Section -->
+    <div id="filesContent" style="display:none;">
+      <h3>All My Files</h3>
+      <div id="allFilesList" class="file-list">
+        <p class="muted small">Loading files...</p>
+      </div>
+    </div>
+
+    <!-- Recipient Section -->
+    <div id="recipientContent" style="display:none;">
+      <h3>Recipient Management</h3>
+      <div class="card" style="padding:20px;margin-top:16px">
+        <div style="margin-bottom:20px">
+          <h4 style="margin-bottom:8px">Your Information</h4>
+          <p class="muted small" id="recipientInfo"></p>
+        </div>
+        
+        <div style="margin-top:24px">
+          <h4 style="margin-bottom:12px">Recipients You've Sent Files To</h4>
+          <div id="recipientsList" class="file-list" style="min-height:100px">
+            <p class="muted small">Loading recipients...</p>
+          </div>
+        </div>
+      </div>
+      </div>
+
+    <!-- Pin Section -->
+    <div id="pinContent" style="display:none;">
+      <h3>PIN Management</h3>
+      <div class="card" style="padding:20px;margin-top:16px">
+        <label>Your 4-digit PIN
+          <input type="text" id="pinDisplay" readonly style="font-size:24px;text-align:center;letter-spacing:8px;font-weight:bold" />
+          </label>
+        <button class="btn primary" onclick="changePin()" style="margin-top:12px">Change PIN</button>
+        <div id="pinMsg" class="muted small" style="margin-top:12px"></div>
+      </div>
+  </div>
+
+    <!-- Send Section -->
+    <div id="sendContent" style="display:none;">
+      <h3>Send File</h3>
+      <form id="sendForm" class="form">
+        <label>Recipient Username
+          <input name="recipient" id="sendRecipient" required />
+        </label>
+        <label>Recipient PIN
+          <input name="recipientPin" id="sendPin" required pattern="\d{4}" />
+        </label>
+        <label>Select File to Send
+          <input type="file" name="sendFile" id="sendFileInput" required />
+        </label>
+        <label>Your Name (optional)
+          <input name="yourName" id="yourNameInput" placeholder="Anonymous" />
+        </label>
+        <div class="form-row">
+          <button class="btn primary" type="submit">Send File</button>
+          <div id="sendMsg" class="muted small"></div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Chat Section -->
+    <div id="chatContent" style="display:none;">
+      <div style="display:flex;gap:20px;height:600px">
+        <!-- Conversations List -->
+        <div style="width:300px;border-right:1px solid #eee;padding-right:16px;overflow-y:auto">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+            <h3 style="margin:0">Conversations</h3>
+            <button class="btn primary" onclick="showNewChat()" style="padding:6px 12px">+ New</button>
+          </div>
+          <div id="conversationsList">
+            <p class="muted small">Loading conversations...</p>
+          </div>
+        </div>
+        
+        <!-- Chat Area -->
+        <div style="flex:1;display:flex;flex-direction:column">
+          <div id="chatHeader" style="border-bottom:1px solid #eee;padding-bottom:12px;margin-bottom:16px">
+            <h3 id="chatWithUser" style="margin:0">Select a conversation</h3>
+            <p class="muted small" id="chatStatus">Choose a conversation from the list</p>
+          </div>
+          
+          <div id="chatMessages" style="flex:1;overflow-y:auto;padding:16px;background:#f9fafb;border-radius:8px;margin-bottom:16px;min-height:400px">
+            <p class="muted small" style="text-align:center">No conversation selected</p>
+          </div>
+          
+          <div id="chatInputArea" style="display:none">
+            <div style="margin-bottom:8px">
+              <label style="font-size:0.9em;color:#666">Recipient PIN (to decrypt messages):</label>
+              <input type="password" id="chatRecipientPin" placeholder="Enter recipient's 4-digit PIN" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;margin-top:4px" pattern="\d{4}" oninput="if(currentChatRecipient && this.value.length === 4) { setTimeout(() => loadChatMessages(currentChatRecipient), 300); }" />
+              <p class="muted small" style="margin-top:4px;font-size:0.8em">Enter the recipient's PIN to decrypt their messages. Your messages are automatically decrypted.</p>
+            </div>
+            <form id="chatForm" style="display:flex;gap:8px">
+              <input type="text" id="chatMessageInput" placeholder="Type a message..." style="flex:1;padding:10px;border:1px solid #ddd;border-radius:8px" required />
+              <button type="submit" class="btn primary">Send</button>
+            </form>
+            <p class="muted small" style="margin-top:8px">
+              <span style="color:#4caf50">🔒</span> Messages are end-to-end encrypted using AES-256
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <style>
+    /* Hamburger Navbar Styles */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: var(--card);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      z-index: 1000;
+      padding: 0;
+    }
+    .navbar-container {
+      max-width: 100%;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+    .navbar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+    }
+    .navbar-title {
+      margin: 0;
+      font-size: 20px;
+      color: var(--accent);
+    }
+    .hamburger {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-around;
+      width: 30px;
+      height: 30px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      z-index: 10;
+    }
+    .hamburger span {
+      width: 30px;
+      height: 3px;
+      background: var(--accent);
+      border-radius: 3px;
+      transition: all 0.3s ease;
+      transform-origin: center;
+    }
+    .hamburger.active span:nth-child(1) {
+      transform: rotate(45deg) translate(8px, 8px);
+    }
+    .hamburger.active span:nth-child(2) {
+      opacity: 0;
+    }
+    .hamburger.active span:nth-child(3) {
+      transform: rotate(-45deg) translate(8px, -8px);
+    }
+    .navbar-menu {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+      background: var(--card);
+      border-top: 1px solid #eee;
+    }
+    .navbar-menu.active {
+      max-height: 600px;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      color: #0f172a;
+      text-decoration: none;
+      border-bottom: 1px solid #f0f3fb;
+      cursor: pointer;
+      transition: background 0.2s;
+      gap: 10px;
+    }
+    .nav-item:hover {
+      background: #f5f7fb;
+    }
+    .nav-item.active {
+      background: #eef2ff;
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .nav-item span:first-child {
+      font-size: 18px;
+      width: 24px;
+      text-align: center;
+    }
+    .nav-item-collapsible {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .nav-item-collapsible .arrow {
+      transition: transform 0.3s ease;
+      font-size: 12px;
+    }
+    .nav-item-collapsible.active .arrow {
+      transform: rotate(180deg);
+    }
+    .submenu {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+      background: #f9fafb;
+    }
+    .submenu.active {
+      max-height: 200px;
+    }
+    .submenu-item {
+      padding-left: 48px !important;
+      font-size: 14px;
+    }
+    .nav-item-logout {
+      border-top: 2px solid #eee;
+      margin-top: 8px;
+      color: var(--danger);
+    }
+    .nav-item-logout:hover {
+      background: #fee;
+    }
+
+    /* File List Styles */
+    .file-list {
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 12px;
+      margin-top: 12px;
+    }
+    .file-item {
+      padding: 12px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .file-item:last-child {
+      border-bottom: none;
+    }
+    .file-info {
+      flex: 1;
+    }
+    .file-name {
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+    .file-meta {
+      font-size: 0.875em;
+      color: #666;
+    }
+    .file-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    @media (min-width: 768px) {
+      .hamburger {
+        display: none;
+      }
+      .navbar-menu {
+        max-height: none;
+        display: flex;
+        border-top: none;
+        gap: 0;
+      }
+      .navbar-menu.active {
+        max-height: none;
+      }
+      .nav-item {
+        border-bottom: none;
+        border-right: 1px solid #f0f3fb;
+        white-space: nowrap;
+      }
+      .nav-item:last-child {
+        border-right: none;
+        margin-left: auto;
+      }
+      .submenu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: var(--card);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        z-index: 100;
+      }
+      .nav-item-collapsible {
+        position: relative;
+      }
+    }
+  </style>
+
+<script>
+    let currentUser = null;
+    let userData = null;
+
+    // Hamburger menu toggle
+    document.getElementById('hamburger').addEventListener('click', function() {
+      const hamburger = this;
+      const menu = document.getElementById('navbarMenu');
+      hamburger.classList.toggle('active');
+      menu.classList.toggle('active');
+    });
+
+    // Toggle collapsible menu
+    function toggleCollapsible() {
+      const collapsible = document.getElementById('navCollapsible');
+      const submenu = document.getElementById('submenu');
+      collapsible.classList.toggle('active');
+      submenu.classList.toggle('active');
+    }
+
+    // Navigation functions
+    function hideAllSections() {
+      document.getElementById('dashboardContent').style.display = 'none';
+      document.getElementById('uploadContent').style.display = 'none';
+      document.getElementById('filesContent').style.display = 'none';
+      document.getElementById('recipientContent').style.display = 'none';
+      document.getElementById('pinContent').style.display = 'none';
+      document.getElementById('sendContent').style.display = 'none';
+      document.getElementById('chatContent').style.display = 'none';
+      
+      // Remove active class from all nav items
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+      });
+    }
+
+    function showDashboard() {
+      hideAllSections();
+      document.getElementById('dashboardContent').style.display = 'block';
+      document.getElementById('navHome').classList.add('active');
+      document.getElementById('pageTitle').textContent = 'Dashboard';
+      loadDashboardData();
+    }
+
+    function showUpload() {
+      hideAllSections();
+      document.getElementById('uploadContent').style.display = 'block';
+      document.getElementById('navUpload').classList.add('active');
+      document.getElementById('pageTitle').textContent = 'Upload File';
+    }
+
+    function showFiles() {
+      hideAllSections();
+      document.getElementById('filesContent').style.display = 'block';
+      document.getElementById('navFiles').classList.add('active');
+      document.getElementById('pageTitle').textContent = 'My Files';
+      loadAllFiles();
+    }
+
+    function showRecipient() {
+      hideAllSections();
+      document.getElementById('recipientContent').style.display = 'block';
+      document.getElementById('pageTitle').textContent = 'Recipient Management';
+      loadRecipientInfo();
+    }
+
+    function showPin() {
+      hideAllSections();
+      document.getElementById('pinContent').style.display = 'block';
+      document.getElementById('pageTitle').textContent = 'PIN Management';
+      loadPin();
+    }
+
+    function showSend() {
+      hideAllSections();
+      document.getElementById('sendContent').style.display = 'block';
+      document.getElementById('pageTitle').textContent = 'Send File';
+    }
+
+    function showChat() {
+      hideAllSections();
+      document.getElementById('chatContent').style.display = 'block';
+      document.getElementById('navChat').classList.add('active');
+      document.getElementById('pageTitle').textContent = 'Chat';
+      loadConversations();
+    }
+
+    // Client-side encryption/decryption using Web Crypto API
+    async function deriveKeyFromPINs(pin1, pin2) {
+      const combined = [pin1, pin2].sort().join('');
+      const encoder = new TextEncoder();
+      const data = encoder.encode(combined);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      return new Uint8Array(hashBuffer);
+    }
+
+    async function encryptMessageClient(message, pin1, pin2) {
+      try {
+        const key = await deriveKeyFromPINs(pin1, pin2);
+        const keyBuffer = key.buffer.slice(0, 32); // Use first 32 bytes for AES-256
+        const cryptoKey = await crypto.subtle.importKey(
+          'raw',
+          keyBuffer,
+          { name: 'AES-CBC' },
+          false,
+          ['encrypt']
+        );
+        
+        const iv = crypto.getRandomValues(new Uint8Array(16));
+        const encoder = new TextEncoder();
+        const data = encoder.encode(message);
+        
+        const encrypted = await crypto.subtle.encrypt(
+          { name: 'AES-CBC', iv: iv },
+          cryptoKey,
+          data
+        );
+        
+        return {
+          iv: Array.from(iv).map(b => b.toString(16).padStart(2, '0')).join(''),
+          encryptedData: Array.from(new Uint8Array(encrypted)).map(b => b.toString(16).padStart(2, '0')).join('')
+        };
+      } catch (e) {
+        console.error('Encryption error:', e);
+        throw e;
+      }
+    }
+
+    async function decryptMessageClient(encryptedObj, pin1, pin2) {
+      try {
+        const key = await deriveKeyFromPINs(pin1, pin2);
+        const keyBuffer = key.buffer.slice(0, 32);
+        const cryptoKey = await crypto.subtle.importKey(
+          'raw',
+          keyBuffer,
+          { name: 'AES-CBC' },
+          false,
+          ['decrypt']
+        );
+        
+        const iv = new Uint8Array(encryptedObj.iv.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+        const encrypted = new Uint8Array(encryptedObj.encryptedData.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+        
+        const decrypted = await crypto.subtle.decrypt(
+          { name: 'AES-CBC', iv: iv },
+          cryptoKey,
+          encrypted
+        );
+        
+        const decoder = new TextDecoder();
+        return decoder.decode(decrypted);
+      } catch (e) {
+        console.error('Decryption error:', e);
+        return null;
+      }
+    }
+
+    let currentChatRecipient = null;
+    let chatPollInterval = null;
+
+    // Load conversations list
+    async function loadConversations() {
+      try {
+        const r = await fetch('/api/chat/conversations', { credentials: 'same-origin' });
+        if (!r.ok) {
+          const error = await r.json().catch(() => ({ error: 'Unknown error' }));
+          throw new Error(error.error || 'Failed to load conversations');
+        }
+        const conversations = await r.json();
+        
+        const listDiv = document.getElementById('conversationsList');
+        
+        if (conversations && conversations.length > 0) {
+          listDiv.innerHTML = conversations.map(conv => `
+            <div class="file-item" style="cursor:pointer;margin-bottom:8px" onclick="openChat('${conv.username}')">
+              <div class="file-info">
+                <div class="file-name">${conv.username}${!conv.userExists ? ' <span style="color:#f59e0b;font-size:0.8em">(deleted)</span>' : ''}</div>
+                <div class="file-meta">${conv.lastMessage ? new Date(conv.lastMessage.time).toLocaleString() : 'No messages'}</div>
+              </div>
+            </div>
+          `).join('');
+        } else {
+          listDiv.innerHTML = '<p class="muted small">No conversations yet. Start a new chat!</p>';
+        }
+      } catch (e) {
+        console.error('Error loading conversations:', e);
+        const errorMsg = e.message || 'Unknown error';
+        document.getElementById('conversationsList').innerHTML = 
+          '<p class="error" style="color:#f44336;padding:12px;background:#fee;border-radius:4px">Error loading conversations: ' + errorMsg + '</p>';
+      }
+    }
+
+    // Open chat with a user
+    async function openChat(recipient) {
+      currentChatRecipient = recipient;
+      document.getElementById('chatWithUser').textContent = `Chat with ${recipient}`;
+      document.getElementById('chatStatus').textContent = 'End-to-end encrypted chat';
+      document.getElementById('chatStatus').style.color = '';
+      document.getElementById('chatInputArea').style.display = 'block';
+      
+      // Clear PIN input when opening new chat
+      document.getElementById('chatRecipientPin').value = '';
+      
+      await loadChatMessages(recipient);
+      
+      // Poll for new messages every 3 seconds
+      if (chatPollInterval) clearInterval(chatPollInterval);
+      chatPollInterval = setInterval(() => {
+        if (currentChatRecipient) loadChatMessages(currentChatRecipient);
+      }, 3000);
+    }
+
+    // Load chat messages
+    async function loadChatMessages(recipient) {
+      try {
+        const r = await fetch(`/api/chat/${recipient}`, { credentials: 'same-origin' });
+        if (!r.ok) {
+          const error = await r.json().catch(() => ({ error: 'Unknown error' }));
+          throw new Error(error.error || 'Failed to load messages');
+        }
+        const data = await r.json();
+        
+        // Show warning if recipient doesn't exist
+        if (data.warning) {
+          document.getElementById('chatStatus').textContent = data.warning + ' (View-only)';
+          document.getElementById('chatStatus').style.color = '#f59e0b';
+        }
+        
+        const messagesDiv = document.getElementById('chatMessages');
+        
+        if (data.messages && data.messages.length > 0) {
+          // Get user's PIN for decryption
+          if (!userData) {
+            const userR = await fetch('/api/user-data', { credentials: 'same-origin' });
+            if (userR.ok) userData = await userR.json();
+          }
+          
+          const myPin = userData.pin || '';
+          const recipientPin = document.getElementById('chatRecipientPin')?.value || '';
+          
+          // If no PIN entered and messages are encrypted, show placeholder
+          if (!recipientPin && data.messages.some(m => m.encrypted)) {
+            messagesDiv.innerHTML = '<p class="muted small" style="text-align:center">Enter recipient PIN above to decrypt messages</p>';
+            return;
+          }
+          
+          // Process messages sequentially to avoid race conditions
+          const messagesHtml = [];
+          for (const msg of data.messages) {
+            // Check if message is from current user - compare strings carefully
+            const msgFrom = String(msg.from || '').trim();
+            const currentUserStr = String(currentUser || '').trim();
+            
+            // Critical: Determine isMine synchronously BEFORE any async operations
+            const isMine = msgFrom.toLowerCase() === currentUserStr.toLowerCase();
+            
+            // Debug logging
+            console.log('Message alignment:', { 
+              msgFrom: msgFrom, 
+              currentUser: currentUserStr, 
+              isMine: isMine,
+              willAlign: isMine ? 'RIGHT' : 'LEFT'
+            });
+            
+            // Determine alignment and styling IMMEDIATELY (synchronously)
+            // Store in constants that won't change
+            const messageAlignment = isMine ? 'flex-end' : 'flex-start';
+            const messageBgColor = isMine ? 'var(--accent)' : '#fff';
+            const messageTextColor = isMine ? '#fff' : '#000';
+            const messageSenderName = isMine ? 'You' : (msg.from || 'Unknown');
+            
+            let messageText = '';
+            
+            // Handle encrypted messages (new format)
+            if (msg.encrypted && msg.message && typeof msg.message === 'object' && msg.message.encryptedData) {
+              if (isMine) {
+                // For my own messages, try decrypting with my PIN and recipient PIN
+                if (recipientPin && myPin) {
+                  try {
+                    const decrypted = await decryptMessageClient(msg.message, myPin, recipientPin);
+                    messageText = decrypted || '[Failed to decrypt my message]';
+                  } catch (e) {
+                    messageText = '[Decryption error]';
+                  }
+                } else {
+                  messageText = '[My encrypted message - enter recipient PIN]';
+                }
+              } else {
+                // For recipient's messages, need their PIN
+                if (recipientPin && myPin) {
+                  try {
+                    const decrypted = await decryptMessageClient(msg.message, myPin, recipientPin);
+                    if (decrypted) {
+                      messageText = decrypted;
+                    } else {
+                      messageText = '[Failed to decrypt - check PIN]';
+                    }
+                  } catch (e) {
+                    console.error('Decryption error:', e);
+                    messageText = '[Decryption error - check PIN]';
+                  }
+                } else {
+                  messageText = '[Encrypted - enter recipient PIN]';
+                }
+              }
+            } 
+            // Handle old unencrypted messages (plain text)
+            else if (msg.message) {
+              if (typeof msg.message === 'string') {
+                messageText = msg.message;
+              } else if (msg.message.encryptedData) {
+                // Legacy encrypted format (object with encryptedData)
+                if (recipientPin && myPin) {
+                  try {
+                    const decrypted = await decryptMessageClient(msg.message, myPin, recipientPin);
+                    messageText = decrypted || '[Failed to decrypt]';
+                  } catch (e) {
+                    messageText = '[Decryption error]';
+                  }
+                } else {
+                  messageText = '[Encrypted - enter PIN]';
+                }
+              } else {
+                messageText = '[Invalid message format]';
+              }
+            } else {
+              messageText = '[No message content]';
+            }
+            
+            // Use the pre-determined alignment values (set synchronously)
+            messagesHtml.push(`
+              <div style="display:flex;justify-content:${messageAlignment};margin-bottom:12px">
+                <div style="max-width:70%;padding:10px 14px;background:${messageBgColor};color:${messageTextColor};border-radius:12px;box-shadow:0 2px 4px rgba(0,0,0,0.1);word-wrap:break-word">
+                  <div style="font-weight:500;font-size:0.9em;margin-bottom:4px">${messageSenderName}</div>
+                  <div style="white-space:pre-wrap">${messageText}</div>
+                  <div style="font-size:0.75em;opacity:0.7;margin-top:4px">${new Date(msg.time).toLocaleString()}</div>
+                </div>
+              </div>
+            `);
+          }
+          
+          messagesDiv.innerHTML = messagesHtml.join('');
+          messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        } else {
+          messagesDiv.innerHTML = '<p class="muted small" style="text-align:center">No messages yet. Start the conversation!</p>';
+        }
+      } catch (e) {
+        document.getElementById('chatMessages').innerHTML = '<p class="error">Error loading messages: ' + e.message + '</p>';
+      }
+    }
+
+    // Show new chat dialog
+    function showNewChat() {
+      const recipient = prompt('Enter recipient username:');
+      if (recipient && recipient !== currentUser) {
+        openChat(recipient);
+      }
+    }
+
+    // Chat form handler
+    document.getElementById('chatForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!currentChatRecipient) {
+        alert('Please select a conversation first');
+        return;
+      }
+      
+      const messageInput = document.getElementById('chatMessageInput');
+      const pinInput = document.getElementById('chatRecipientPin');
+      const message = messageInput.value.trim();
+      const recipientPin = pinInput.value;
+      
+      if (!message) {
+        alert('Please enter a message');
+        return;
+      }
+      
+      if (!recipientPin || !/^\d{4}$/.test(recipientPin)) {
+        alert('Please enter a valid 4-digit recipient PIN');
+        return;
+      }
+      
+      try {
+        const r = await fetch('/api/chat/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({
+            recipient: currentChatRecipient,
+            message: message,
+            recipientPin: recipientPin
+          })
+        });
+        
+        if (!r.ok) {
+          const error = await r.json();
+          throw new Error(error.error || 'Failed to send message');
+        }
+        
+        messageInput.value = '';
+        await loadChatMessages(currentChatRecipient);
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    });
+
+    // Load dashboard data
+    async function loadDashboardData(forceRefresh = false) {
+      try {
+        // Show loading state
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('dashboardMain').style.display = 'none';
+        
+        if (!userData || forceRefresh) {
+          const r = await fetch('/api/user-data', { credentials: 'same-origin' });
+          if (!r.ok) throw new Error('Failed to load user data');
+          userData = await r.json();
+        }
+
+        // Display pending files
+        const pendingDiv = document.getElementById('pendingFiles');
+        if (userData.pending && userData.pending.length > 0) {
+          pendingDiv.innerHTML = userData.pending.map(file => `
+            <div class="file-item">
+              <div class="file-info">
+                <div class="file-name">${file.filename}</div>
+                <div class="file-meta">From: ${file.sender || 'Anonymous'} • ${new Date(file.time).toLocaleString()}</div>
+              </div>
+              <div class="file-actions">
+                <button class="btn" onclick="approveFile('${file.id}')" style="background:#4caf50;color:white">Approve</button>
+                <button class="btn" onclick="rejectFile('${file.id}')" style="background:#f44336;color:white">Reject</button>
+              </div>
+            </div>
+          `).join('');
+        } else {
+          pendingDiv.innerHTML = '<p class="muted small">No pending files.</p>';
+        }
+
+        // Display approved files
+        const approvedDiv = document.getElementById('approvedFiles');
+        if (userData.files && userData.files.length > 0) {
+          approvedDiv.innerHTML = userData.files.map(file => `
+            <div class="file-item">
+              <div class="file-info">
+                <div class="file-name">${file.filename}</div>
+                <div class="file-meta">From: ${file.sender || 'Anonymous'} • ${new Date(file.time).toLocaleString()}</div>
+              </div>
+              <div class="file-actions">
+                <a href="/api/download/${file.id}" class="btn primary">Download</a>
+              </div>
+            </div>
+          `).join('');
+        } else {
+          approvedDiv.innerHTML = '<p class="muted small">No approved files.</p>';
+        }
+
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('dashboardMain').style.display = 'block';
+      } catch (e) {
+        document.getElementById('loading').textContent = 'Error loading dashboard: ' + e.message;
+      }
+    }
+
+    // Load all files
+    async function loadAllFiles(forceRefresh = false) {
+      try {
+        if (!userData || forceRefresh) {
+          const r = await fetch('/api/user-data', { credentials: 'same-origin' });
+          if (!r.ok) throw new Error('Failed to load user data');
+          userData = await r.json();
+        }
+
+        const allFiles = [...(userData.pending || []), ...(userData.files || [])];
+        const filesDiv = document.getElementById('allFilesList');
+        
+        if (allFiles.length > 0) {
+          filesDiv.innerHTML = allFiles.map(file => {
+            const isPending = userData.pending?.some(f => f.id === file.id);
+            return `
+              <div class="file-item">
+                <div class="file-info">
+                  <div class="file-name">${file.filename} ${isPending ? '<span style="color:#f59e0b">(Pending)</span>' : ''}</div>
+                  <div class="file-meta">From: ${file.sender || 'Anonymous'} • ${new Date(file.time).toLocaleString()}</div>
+                </div>
+                <div class="file-actions">
+                  ${isPending ? 
+                    `<button class="btn" onclick="approveFile('${file.id}')" style="background:#4caf50;color:white">Approve</button>
+                     <button class="btn" onclick="rejectFile('${file.id}')" style="background:#f44336;color:white">Reject</button>` :
+                    `<a href="/api/download/${file.id}" class="btn primary">Download</a>`
+                  }
+                </div>
+              </div>
+            `;
+          }).join('');
+        } else {
+          filesDiv.innerHTML = '<p class="muted small">No files found.</p>';
+        }
+      } catch (e) {
+        document.getElementById('allFilesList').innerHTML = '<p class="error">Error loading files: ' + e.message + '</p>';
+      }
+    }
+
+    // Load recipient info
+    async function loadRecipientInfo() {
+      try {
+        // Show user info
+        if (!userData) {
+          const r = await fetch('/api/user-data', { credentials: 'same-origin' });
+          if (!r.ok) throw new Error('Failed to load user data');
+          userData = await r.json();
+        }
+        
+        const pin = userData.pin || 'Not set';
+        document.getElementById('recipientInfo').textContent = 
+          `Username: ${currentUser} | PIN: ${pin}\nShare this information with others to allow them to send you files.`;
+        
+        // Load sent files
+        const sentData = await fetch('/api/sent-files', { credentials: 'same-origin' });
+        if (!sentData.ok) throw new Error('Failed to load sent files');
+        const sentFiles = await sentData.json();
+        
+        const recipientsDiv = document.getElementById('recipientsList');
+        
+        if (sentFiles && sentFiles.length > 0) {
+          // Group by recipient
+          const recipientMap = {};
+          sentFiles.forEach(file => {
+            if (!recipientMap[file.receiver]) {
+              recipientMap[file.receiver] = [];
+            }
+            recipientMap[file.receiver].push(file);
+          });
+          
+          // Display grouped recipients
+          recipientsDiv.innerHTML = Object.keys(recipientMap).map(receiver => {
+            const files = recipientMap[receiver];
+            const fileCount = files.length;
+            const lastSent = new Date(files[files.length - 1].time).toLocaleString();
+            
+            // Count statuses
+            const approvedCount = files.filter(f => f.status === 'approved').length;
+            const pendingCount = files.filter(f => f.status === 'pending').length;
+            const rejectedCount = files.filter(f => f.status === 'rejected').length;
+            
+            return `
+              <div class="file-item recipient-item" style="cursor:pointer" onclick="toggleRecipientDetails('${receiver}')">
+                <div class="file-info">
+                  <div class="file-name">${receiver}</div>
+                  <div class="file-meta">
+                    ${fileCount} file${fileCount > 1 ? 's' : ''} sent • 
+                    ${approvedCount > 0 ? `<span style="color:#4caf50">${approvedCount} approved</span>` : ''}
+                    ${pendingCount > 0 ? `<span style="color:#f59e0b">${pendingCount} pending</span>` : ''}
+                    ${rejectedCount > 0 ? `<span style="color:#f44336">${rejectedCount} rejected</span>` : ''}
+                    • Last sent: ${lastSent}
+                  </div>
+                  <div class="recipient-details" id="details-${receiver}" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid #eee">
+                    ${files.map(file => {
+                      const statusColor = file.status === 'approved' ? '#4caf50' : 
+                                         file.status === 'rejected' ? '#f44336' : '#f59e0b';
+                      const statusIcon = file.status === 'approved' ? '✓' : 
+                                       file.status === 'rejected' ? '✗' : '⏳';
+                      return `
+                        <div style="padding:8px;background:#f9fafb;border-radius:4px;margin-bottom:8px">
+                          <div style="display:flex;justify-content:space-between;align-items:center">
+                            <div>
+                              <strong>${file.filename}</strong>
+                              <div style="font-size:0.85em;color:#666;margin-top:4px">
+                                Sent: ${new Date(file.time).toLocaleString()}
+                              </div>
+                            </div>
+                            <span style="color:${statusColor};font-weight:bold">${statusIcon} ${file.status || 'pending'}</span>
+                          </div>
+                        </div>
+                      `;
+                    }).join('')}
+                  </div>
+                </div>
+                <div class="file-actions">
+                  <span class="detail-toggle" id="toggle-${receiver}" style="color:var(--accent)">▼</span>
+                </div>
+              </div>
+            `;
+          }).join('');
+        } else {
+          recipientsDiv.innerHTML = '<p class="muted small">You haven\'t sent any files yet. Use the Upload or Send option to send files to recipients.</p>';
+        }
+      } catch (e) {
+        document.getElementById('recipientsList').innerHTML = '<p class="error">Error loading recipients: ' + e.message + '</p>';
+        document.getElementById('recipientInfo').textContent = 
+          `You can receive files from other users. Share your username "${currentUser}" and your PIN to allow others to send you files.`;
+      }
+    }
+    
+    // Toggle recipient details
+    function toggleRecipientDetails(receiver) {
+      const detailsDiv = document.getElementById(`details-${receiver}`);
+      const toggleSpan = document.getElementById(`toggle-${receiver}`);
+      
+      if (detailsDiv.style.display === 'none') {
+        detailsDiv.style.display = 'block';
+        toggleSpan.textContent = '▲';
+      } else {
+        detailsDiv.style.display = 'none';
+        toggleSpan.textContent = '▼';
+      }
+    }
+
+    // Load PIN
+    async function loadPin() {
+      try {
+        if (!userData) {
+          const r = await fetch('/api/user-data', { credentials: 'same-origin' });
+          if (!r.ok) throw new Error('Failed to load user data');
+          userData = await r.json();
+        }
+        const pin = userData.pin || 'Not set';
+        document.getElementById('pinDisplay').value = pin;
+      } catch (e) {
+        document.getElementById('pinMsg').textContent = 'Error loading PIN: ' + e.message;
+      }
+    }
+
+    // Change PIN
+    async function changePin() {
+      const newPin = prompt('Enter new 4-digit PIN:');
+      if (newPin && /^\d{4}$/.test(newPin)) {
+        try {
+          const r = await fetch('/api/update-pin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ pin: newPin })
+          });
+          if (r.ok) {
+            document.getElementById('pinDisplay').value = newPin;
+            document.getElementById('pinMsg').textContent = 'PIN updated successfully!';
+            if (userData) userData.pin = newPin;
+          } else {
+            throw new Error('Failed to update PIN');
+          }
+        } catch (e) {
+          document.getElementById('pinMsg').textContent = 'Error: ' + e.message;
+        }
+      } else if (newPin) {
+        alert('PIN must be exactly 4 digits');
+      }
+    }
+
+    // Upload form handler
+    document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData();
+      formData.append('receiver', document.getElementById('receiverInput').value);
+      formData.append('pin', document.getElementById('pinInput').value);
+      formData.append('sender', document.getElementById('senderInput').value || 'Anonymous');
+      formData.append('file', document.getElementById('fileInput').files[0]);
+      
+      const msgDiv = document.getElementById('uploadMsg');
+      msgDiv.textContent = 'Uploading...';
+      
+      try {
+        const res = await fetch('/upload', { method: 'POST', body: formData, credentials: 'same-origin' });
+        const text = await res.text();
+        if (!res.ok) throw new Error(text || res.statusText);
+        msgDiv.textContent = 'Success: ' + text;
+        msgDiv.style.color = '#4caf50';
+        e.target.reset();
+      } catch (err) {
+        msgDiv.textContent = 'Upload failed: ' + (err.message || err);
+        msgDiv.style.color = '#f44336';
+      }
+    });
+
+    // Send form handler
+    document.getElementById('sendForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData();
+      formData.append('receiver', document.getElementById('sendRecipient').value);
+      formData.append('pin', document.getElementById('sendPin').value);
+      formData.append('sender', document.getElementById('yourNameInput').value || 'Anonymous');
+      formData.append('file', document.getElementById('sendFileInput').files[0]);
+      
+      const msgDiv = document.getElementById('sendMsg');
+      msgDiv.textContent = 'Sending...';
+      
+      try {
+        const res = await fetch('/upload', { method: 'POST', body: formData, credentials: 'same-origin' });
+        const text = await res.text();
+        if (!res.ok) throw new Error(text || res.statusText);
+        msgDiv.textContent = 'File sent successfully: ' + text;
+        msgDiv.style.color = '#4caf50';
+        e.target.reset();
+      } catch (err) {
+        msgDiv.textContent = 'Send failed: ' + (err.message || err);
+        msgDiv.style.color = '#f44336';
+      }
+    });
+
+    // Initialize
+    (async function() {
+      // Check authentication
+      try {
+        const r = await fetch('/api/whoami', { credentials: 'same-origin' });
+        if (!r.ok) {
+          window.location.href = '/login.html';
+          return;
+        }
+        const data = await r.json();
+        currentUser = data.user;
+        document.getElementById('welcomeText').textContent = `Welcome, ${currentUser}!`;
+      } catch (e) {
+        window.location.href = '/login.html';
+        return;
+      }
+
+      // Show dashboard by default
+      showDashboard();
+    })();
+
+    async function approveFile(fileId) {
+      try {
+        const r = await fetch(`/api/approve/${fileId}`, { method: 'POST', credentials: 'same-origin' });
+        if (!r.ok) throw new Error('Failed to approve file');
+        
+        // Force refresh of user data
+        userData = null;
+        
+        // Refresh dashboard if visible
+        const dashboardContent = document.getElementById('dashboardContent');
+        if (dashboardContent && dashboardContent.style.display !== 'none') {
+          await loadDashboardData(true);
+        }
+        
+        // Refresh files view if visible
+        const filesContent = document.getElementById('filesContent');
+        if (filesContent && filesContent.style.display !== 'none') {
+          await loadAllFiles(true);
+        }
+      } catch (e) {
+        alert('Error: ' + e.message);
+      }
+    }
+
+    async function rejectFile(fileId) {
+      try {
+        const r = await fetch(`/api/reject/${fileId}`, { method: 'POST', credentials: 'same-origin' });
+        if (!r.ok) throw new Error('Failed to reject file');
+        
+        // Force refresh of user data
+        userData = null;
+        
+        // Refresh dashboard if visible
+        const dashboardContent = document.getElementById('dashboardContent');
+        if (dashboardContent && dashboardContent.style.display !== 'none') {
+          await loadDashboardData(true);
+        }
+        
+        // Refresh files view if visible
+        const filesContent = document.getElementById('filesContent');
+        if (filesContent && filesContent.style.display !== 'none') {
+          await loadAllFiles(true);
+        }
+      } catch (e) {
+        alert('Error: ' + e.message);
+      }
+    }
+</script>
+</body>
+</html>

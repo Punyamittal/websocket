@@ -1,0 +1,173 @@
+{
+  "24BCE1421": {
+    "password": "$2a$10$41nsxFpdu02F6SeISB9w0.tWNbWezvXedm8B6aTyYT2Yt.mmbf6w.",
+    "pin": "1234",
+    "pending": [],
+    "files": [
+      {
+        "id": "5c3e1b9f-ada8-4b67-86e7-bae495126fb1",
+        "filename": "Adobe Scan May 11, 2025 (8).pdf",
+        "storedName": "1760500794709_995da788-ef2d-48be-bf6e-5903e40b32fa_Adobe Scan May 11, 2025 (8).pdf",
+        "sender": "",
+        "time": "2025-10-15T03:59:54.712Z"
+      },
+      {
+        "id": "7f8e362c-2ed1-4a36-a929-5d54d795bf28",
+        "filename": "CN CAT 2.pdf",
+        "storedName": "1760501353744_2a269aaa-ebf7-4a83-98f5-0894d3c5997c_CN CAT 2.pdf",
+        "sender": "k",
+        "time": "2025-10-15T04:09:13.749Z"
+      }
+    ]
+  },
+  "garvikjain": {
+    "password": "$2a$10$CbHv7itCqOQr097goOVFKem8igYtMwuE0XlqyP8Afb5207PdtVivW",
+    "pin": "3456",
+    "pending": [],
+    "files": [
+      {
+        "id": "98fc6601-ea48-48f0-bbb9-68dfcaa9ac63",
+        "filename": "B9780128241622000117.txt",
+        "storedName": "1762068527446_a3a413d8-1d68-44e1-8cc3-dd5eb78875d4_B9780128241622000117.txt",
+        "sender": "nihello",
+        "time": "2025-11-02T07:28:47.448Z"
+      },
+      {
+        "id": "77fb333b-eb64-4139-bf3f-d36f492ee727",
+        "filename": "B9780128241622000117.txt",
+        "storedName": "1762068568352_a67fe394-34b4-48db-913b-9c71b625f603_B9780128241622000117.txt",
+        "sender": "nihello",
+        "time": "2025-11-02T07:29:28.353Z"
+      },
+      {
+        "id": "5494a69b-f305-4530-9ed4-3d6d7ae9b1a7",
+        "filename": "B9780128241622000117.txt",
+        "storedName": "1762069353478_dce51dc9-45ba-4598-b6ed-9edafb63bda2_B9780128241622000117.txt",
+        "sender": "Garvik",
+        "time": "2025-11-02T07:42:33.480Z"
+      },
+      {
+        "id": "39203942-8143-4fd6-91a5-f89f1f145ba7",
+        "filename": "B9780128241622000117.txt",
+        "storedName": "1762069979480_17a6edf1-e0bf-4663-86ad-1974bdff6559_B9780128241622000117.txt",
+        "sender": "Garvik",
+        "time": "2025-11-02T07:52:59.484Z"
+      },
+      {
+        "id": "16b6db5e-a668-423b-bdc8-0b54cc190ad0",
+        "filename": "cn da 24bai1088.pdf",
+        "storedName": "1762069997656_8ce62f2b-0263-41e4-ab09-6aa426de2dc3_cn da 24bai1088.pdf",
+        "sender": "Garvik",
+        "time": "2025-11-02T07:53:17.659Z"
+      },
+      {
+        "id": "a0056705-a927-46a1-9934-ae03237a5ae0",
+        "filename": "web report.docx",
+        "storedName": "1762103713736_0dbb6638-da09-40aa-a390-9bcb8bac49be_web report.docx",
+        "sender": "asdfgh",
+        "time": "2025-11-02T17:15:13.739Z"
+      },
+      {
+        "id": "96d7a7c1-7683-4759-8576-24c61a29defa",
+        "filename": "bonafide.pdf",
+        "storedName": "1762104108626_f3baddc6-18ad-47a2-b819-7ddfa09232df_bonafide.pdf",
+        "sender": "asdfgh",
+        "time": "2025-11-02T17:21:48.629Z"
+      }
+    ],
+    "sentFiles": [
+      {
+        "id": "96d7a7c1-7683-4759-8576-24c61a29defa",
+        "filename": "bonafide.pdf",
+        "receiver": "garvikjain",
+        "receiverUsername": "garvikjain",
+        "senderName": "asdfgh",
+        "time": "2025-11-02T17:21:48.629Z",
+        "status": "approved"
+      }
+    ]
+  },
+  "nihao": {
+    "password": null,
+    "pin": null,
+    "pending": [],
+    "files": [
+      {
+        "id": "a98c83fa-620d-47b3-9827-d6a6a893c99a",
+        "filename": "B9780128241622000117.txt",
+        "storedName": "1762068395789_8dbebb0a-10e8-44d5-9311-12884806db9e_B9780128241622000117.txt",
+        "sender": "garvikjain",
+        "time": "2025-11-02T07:26:35.792Z"
+      }
+    ]
+  },
+  "nihello": {
+    "password": "$2a$10$hUJelKVDFoRs6jhXEQVahuF1suht1bcHTGgvhk1phhiFdWLTX5GiO",
+    "pin": "1234",
+    "pending": [],
+    "files": [
+      {
+        "id": "12b0f629-d0ae-4930-9be3-0d8273da2935",
+        "filename": "B9780128241622000117.txt",
+        "storedName": "1762069115879_6ac57a1e-158b-4c5c-bd62-5b83a8e0c88e_B9780128241622000117.txt",
+        "sender": "Garvik",
+        "time": "2025-11-02T07:38:35.883Z"
+      }
+    ]
+  },
+  "Garvik": {
+    "password": "$2a$10$Gfcouwrk5d20lHA/HGhf0.CL.HrDSQooMjr5OFNRmb2YN99APzVY6",
+    "pin": "1234",
+    "pending": [],
+    "files": [
+      {
+        "id": "ce27307b-a5db-4bcd-b7e7-9137de3ee90d",
+        "filename": "bullshit.docx",
+        "storedName": "1762070028979_aab014f9-f2e1-4810-819e-28d8b63a7f97_bullshit.docx",
+        "sender": "hola",
+        "time": "2025-11-02T07:53:48.981Z"
+      },
+      {
+        "id": "28ca7a1d-693d-4663-ae18-c31df49fa4b9",
+        "filename": "DIGITAL ASSIGNMENT.pdf",
+        "storedName": "1762071981133_48f56d90-b488-4986-a739-f42f8ba489e2_DIGITAL ASSIGNMENT.pdf",
+        "sender": "hola",
+        "time": "2025-11-02T08:26:21.136Z"
+      }
+    ]
+  },
+  "Punya": {
+    "password": "$2a$10$hrgaaqdfnxBfe39sAWYrMeVtFfQ5XP.ns8bDq/WfmEvBXaEVQOTR6",
+    "pin": "1234",
+    "pending": [],
+    "sentFiles": [
+      {
+        "id": "75677aae-875f-4e12-b1f2-2d253d3732cd",
+        "filename": "Tech Horizon Club.docx",
+        "receiver": "Punya",
+        "receiverUsername": "Punya",
+        "senderName": "anon",
+        "time": "2025-11-02T17:06:43.815Z",
+        "status": "approved"
+      },
+      {
+        "id": "a0056705-a927-46a1-9934-ae03237a5ae0",
+        "filename": "web report.docx",
+        "receiver": "garvikjain",
+        "receiverUsername": "garvikjain",
+        "senderName": "asdfgh",
+        "time": "2025-11-02T17:15:13.739Z",
+        "status": "approved"
+      }
+    ],
+    "files": [
+      {
+        "id": "75677aae-875f-4e12-b1f2-2d253d3732cd",
+        "filename": "Tech Horizon Club.docx",
+        "storedName": "1762103203814_c87a1e90-9707-4ac8-8147-1f4a05640978_Tech Horizon Club.docx",
+        "sender": "anon",
+        "time": "2025-11-02T17:06:43.815Z"
+      }
+    ]
+  }
+}

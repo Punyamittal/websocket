@@ -1,0 +1,288 @@
+Here are some practice questions on matrices in C, covering rotation, transposition, and other operations. Try to solve them using pointer notation for better understanding! 🚀
+
+1. Rotate a Matrix by 90 Degrees Clockwise
+📌 Problem:
+Write a C program to rotate a square matrix by 90 degrees clockwise in place.
+
+Example Input:
+Copy
+Edit
+3 3
+1 2 3
+4 5 6
+7 8 9
+Output (90-degree rotation):
+Copy
+Edit
+7 4 1
+8 5 2
+9 6 3
+2. Rotate a Matrix by 90 Degrees Counterclockwise
+📌 Problem:
+Modify the above program to rotate the matrix 90 degrees counterclockwise.
+
+Example Input:
+Copy
+Edit
+3 3
+1 2 3
+4 5 6
+7 8 9
+Output (90-degree counterclockwise rotation):
+Copy
+Edit
+3 6 9
+2 5 8
+1 4 7
+3. Rotate a Rectangular Matrix (r × c)
+📌 Problem:
+Write a C program to rotate a non-square (rectangular) matrix 90 degrees clockwise using a separate matrix.
+
+Example Input:
+Copy
+Edit
+2 3
+1 2 3
+4 5 6
+Output:
+Copy
+Edit
+4 1
+5 2
+6 3
+4. Transpose a Matrix (Swap Rows and Columns)
+📌 Problem:
+Write a C program to transpose a matrix (convert arr[i][j] to arr[j][i]).
+
+Example Input:
+Copy
+Edit
+3 3
+1 2 3
+4 5 6
+7 8 9
+Output (Transpose):
+Copy
+Edit
+1 4 7
+2 5 8
+3 6 9
+5. Flip a Matrix Horizontally
+📌 Problem:
+Write a C program to reverse each row of a matrix.
+
+Example Input:
+Copy
+Edit
+3 3
+1 2 3
+4 5 6
+7 8 9
+Output:
+Copy
+Edit
+3 2 1
+6 5 4
+9 8 7
+6. Flip a Matrix Vertically
+📌 Problem:
+Write a C program to reverse each column of a matrix.
+
+Example Input:
+Copy
+Edit
+3 3
+1 2 3
+4 5 6
+7 8 9
+Output:
+Copy
+Edit
+7 8 9
+4 5 6
+1 2 3
+7. Spiral Order Matrix Traversal
+📌 Problem:
+Given a matrix, print its elements in spiral order (clockwise direction).
+
+Example Input:
+Copy
+Edit
+3 3
+1 2 3
+4 5 6
+7 8 9
+Output (Spiral Order Traversal):
+Copy
+Edit
+1 2 3 6 9 8 7 4 5
+8. Find the Saddle Point of a Matrix
+📌 Problem:
+A saddle point in a matrix is an element that is the smallest in its row but largest in its column. Write a program to find the saddle point in a given matrix.
+
+Example Input:
+Copy
+Edit
+3 3
+1 2 3
+4 5 6
+7 8 9
+Output:
+arduino
+Copy
+Edit
+Saddle point: 5
+(Since 5 is the smallest in row 2 and the largest in column 2.)
+
+9. Check if a Matrix is Symmetric
+📌 Problem:
+A symmetric matrix is one where arr[i][j] == arr[j][i] for all elements. Write a C program to check if a matrix is symmetric.
+
+Example Input:
+Copy
+Edit
+3 3
+1 2 3
+2 4 5
+3 5 6
+Output:
+pgsql
+Copy
+Edit
+The matrix is symmetric.
+10. Find the Determinant of a 2×2 Matrix
+📌 Problem:
+Write a program to compute the determinant of a 2×2 matrix using the formula:
+
+det
+(
+𝐴
+)
+=
+𝑎
+11
+𝑎
+22
+−
+𝑎
+12
+𝑎
+21
+det(A)=a 
+11
+​
+ a 
+22
+​
+ −a 
+12
+​
+ a 
+21
+​
+ 
+Example Input:
+Copy
+Edit
+2 2
+4 3
+6 3
+Output:
+ini
+Copy
+Edit
+Determinant = -6
+11. Find the Row with Maximum Sum
+📌 Problem:
+Write a program to find which row has the highest sum.
+
+Example Input:
+Copy
+Edit
+3 3
+1 2 3
+4 5 6
+7 8 9
+Output:
+bash
+Copy
+Edit
+Row 3 has the highest sum: 24
+12. Check if a Matrix is an Identity Matrix
+📌 Problem:
+An identity matrix is a square matrix where all diagonal elements are 1 and all others are 0.
+
+Example Input:
+Copy
+Edit
+3 3
+1 0 0
+0 1 0
+0 0 1
+Output:
+pgsql
+Copy
+Edit
+It is an identity matrix.
+13. Multiply Two Matrices
+📌 Problem:
+Write a program to multiply two matrices.
+
+Example Input:
+scss
+Copy
+Edit
+Matrix 1 (2×3):
+1 2 3
+4 5 6
+
+Matrix 2 (3×2):
+7 8
+9 10
+11 12
+Output:
+yaml
+Copy
+Edit
+Resultant Matrix:
+58 64
+139 154
+14. Sum of the Diagonal Elements of a Matrix
+📌 Problem:
+Write a C program to find the sum of the main diagonal elements (arr[i][i]).
+
+Example Input:
+Copy
+Edit
+3 3
+1 2 3
+4 5 6
+7 8 9
+Output:
+java
+Copy
+Edit
+Sum of diagonal elements = 15
+15. Search an Element in a Row-Wise & Column-Wise Sorted Matrix
+📌 Problem:
+Given a matrix sorted both row-wise and column-wise, search for a given element efficiently.
+
+Example Input:
+Copy
+Edit
+4 4
+10 20 30 40
+15 25 35 45
+27 29 37 48
+32 33 39 50
+Search for: 29
+
+Output:
+java
+Copy
+Edit
+Element found at (2,2)
+Bonus Challenge: Magic Square
+📌 Problem:
+A magic square is a matrix where the sum of every row, column, and both diagonals is the same. Write a program to check if a given matrix is a magic square.
+

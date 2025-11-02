@@ -1,0 +1,58 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Anonymous Upload - SecureDrop</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main class="card" style="max-width:640px;margin:28px auto">
+    <h2>Anonymous Upload</h2>
+    <p class="small muted">Send a file to a receiver using their username + 4-digit PIN.</p>
+
+    <form id="uploadForm" method="POST" action="/upload" enctype="multipart/form-data" class="form">
+      <label>Receiver username
+        <input name="receiver" required />
+      </label>
+
+      <label>Receiver 4-digit PIN
+        <input name="pin" required pattern="\d{4}" title="4 digits" />
+      </label>
+
+      <label>Sender name (optional)
+        <input name="sender" placeholder="Anonymous" />
+      </label>
+
+      <label>File
+        <input type="file" name="file" required />
+      </label>
+
+      <div class="form-row">
+        <button class="btn primary" type="submit">Upload</button>
+        <a class="link" href="/">Home</a>
+        <a class="link" href="/dashboard.html">Dashboard</a>
+      </div>
+    </form>
+
+    <div id="msg" class="muted small" style="margin-top:12px"></div>
+  </main>
+
+<script>
+document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const f = new FormData(e.target);
+  const msg = document.getElementById('msg');
+  msg.textContent = 'Uploading...';
+  try {
+    const res = await fetch('/upload', { method: 'POST', body: f });
+    const text = await res.text();
+    if (!res.ok) throw new Error(text || res.statusText);
+    msg.textContent = 'Success: ' + text;
+  } catch (err) {
+    msg.textContent = 'Upload failed: ' + (err.message || err);
+  }
+});
+</script>
+</body>
+</html>

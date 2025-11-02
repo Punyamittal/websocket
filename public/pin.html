@@ -1,0 +1,74 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Set PIN - SecureDrop</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main class="card" style="max-width:480px;margin:32px auto">
+    <h2>Set 4-digit PIN</h2>
+    <p class="small muted">This PIN lets anonymous senders deliver files to you.</p>
+
+    <form id="pinForm" method="POST" action="/setpin" class="form">
+      <input type="hidden" name="username" id="username" />
+
+      <label>4-digit PIN
+        <input name="pin" id="pin" pattern="\d{4}" inputmode="numeric" maxlength="4" required />
+      </label>
+
+      <div class="form-row">
+        <button class="btn primary" type="submit">Save PIN</button>
+        <a class="link" href="/dashboard.html">Skip</a>
+      </div>
+
+      <p id="msg" class="muted small" style="margin-top:8px"></p>
+    </form>
+  </main>
+
+<script>
+(function(){
+  const q = new URLSearchParams(location.search);
+  const u = q.get('u');
+
+  // populate username hidden field from query param or /api/whoami
+  async function setUsername(val){
+    document.getElementById('username').value = val || '';
+  }
+
+  if (u) {
+    setUsername(u);
+  } else {
+    // try to get logged-in user
+    fetch('/api/whoami').then(r=>{
+      if (r.ok) return r.json();
+      throw new Error('not logged in');
+    }).then(j => setUsername(j.user))
+      .catch(()=> setUsername(''));
+  }
+
+  const form = document.getElementById('pinForm');
+  const msg = document.getElementById('msg');
+  form.addEventListener('submit', (e)=>{
+    const pin = document.getElementById('pin').value.trim();
+    const username = document.getElementById('username').value.trim();
+    if (!/^\d{4}$/.test(pin)) {
+      e.preventDefault();
+      msg.textContent = 'PIN must be exactly 4 digits.';
+      msg.className = 'error';
+      return false;
+    }
+    if (!username) {
+      // prevent submit and show instruction
+      e.preventDefault();
+      msg.textContent = 'Username missing. Please open this page from the signup flow or login first.';
+      msg.className = 'error';
+      return false;
+    }
+    // allow form submit (POST /setpin) — server will set session and redirect
+    msg.textContent = 'Saving...';
+    msg.className = 'muted small';
+    return true;
+  });
+})();

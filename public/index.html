@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>SecureDrop</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main class="center-card">
+    <h1 class="brand">SecureDrop</h1>
+    <p class="lead">Secure anonymous file drop + chat</p>
+    <div class="actions">
+      <a class="btn primary" id="goLogin" href="/login.html">Login</a>
+      <a class="btn" id="goSignup" href="/signup.html">Sign up</a>
+    </div>
+    <footer class="muted">Run server then open <strong>http://localhost:10000</strong></footer>
+  </main>
+
+  <!-- auto-redirect to dashboard if already logged in -->
+  <script>
+  (async function(){
+    try{
+      const r = await fetch('/api/whoami', { credentials: 'same-origin' });
+      if (r.ok) {
+        // already logged in -> go to dashboard
+        window.location.href = '/dashboard.html';
+      }
+    }catch(e){
+      // ignore (not logged in or endpoint not available)
+    }
+  })();
+  </script>
+</body>
+</html>
