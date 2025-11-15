@@ -16,10 +16,57 @@ const DATA_DIR = path.join(__dirname, 'data');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 const UPLOAD_DIR = path.join(__dirname, 'uploads', 'pending');
 const APPROVED_DIR = path.join(__dirname, 'uploads', 'approved');
+const RSA_KEY_DIR = path.join(__dirname, 'data');
+const RSA_PRIVATE_KEY_FILE = path.join(RSA_KEY_DIR, 'rsa_private_key.pem');
+const RSA_PUBLIC_KEY_FILE = path.join(RSA_KEY_DIR, 'rsa_public_key.pem');
 
 fs.ensureDirSync(DATA_DIR);
 fs.ensureDirSync(UPLOAD_DIR);
 fs.ensureDirSync(APPROVED_DIR);
+fs.ensureDirSync(RSA_KEY_DIR);
+
+// RSA Key Management
+let rsaPrivateKey = null;
+let rsaPublicKey = null;
+
+// Generate or load RSA keys (2048 bits minimum)
+function initializeRSAKeys() {
+  try {
+    if (fs.existsSync(RSA_PRIVATE_KEY_FILE) && fs.existsSync(RSA_PUBLIC_KEY_FILE)) {
+      // Load existing keys
+      rsaPrivateKey = fs.readFileSync(RSA_PRIVATE_KEY_FILE, 'utf8');
+      rsaPublicKey = fs.readFileSync(RSA_PUBLIC_KEY_FILE, 'utf8');
+      console.log('Loaded existing RSA keys');
+    } else {
+      // Generate new RSA key pair (2048 bits)
+      const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
+        modulusLength: 2048,
+        publicKeyEncoding: {
+          type: 'spki',
+          format: 'pem'
+        },
+        privateKeyEncoding: {
+          type: 'pkcs8',
+          format: 'pem'
+        }
+      });
+      
+      rsaPrivateKey = privateKey;
+      rsaPublicKey = publicKey;
+      
+      // Save keys to files (private key should be protected in production)
+      fs.writeFileSync(RSA_PRIVATE_KEY_FILE, privateKey, { mode: 0o600 });
+      fs.writeFileSync(RSA_PUBLIC_KEY_FILE, publicKey, { mode: 0o644 });
+      console.log('Generated new RSA key pair (2048 bits)');
+    }
+  } catch (error) {
+    console.error('Error initializing RSA keys:', error);
+    throw error;
+  }
+}
+
+// Initialize RSA keys on startup
+initializeRSAKeys();
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -52,21 +99,87 @@ function writeUsers(users) {
   fs.writeJsonSync(USERS_FILE, users, { spaces: 2 });
 }
 
-// Chat encryption/decryption functions
-function encryptMessage(message, key) {
-  const algorithm = 'aes-256-cbc';
-  const iv = crypto.randomBytes(16);
-  const cipher = crypto.createCipheriv(algorithm, Buffer.from(key, 'hex'), iv);
-  let encrypted = cipher.update(message, 'utf8', 'hex');
-  encrypted += cipher.final('hex');
-  return {
-    iv: iv.toString('hex'),
-    encryptedData: encrypted
-  };
+// RSA encryption/decryption functions
+// RSA-OAEP can encrypt max ~214 bytes per chunk for 2048-bit keys
+const RSA_MAX_CHUNK_SIZE = 214; // bytes per chunk (accounting for OAEP padding)
+
+function encryptMessageRSA(message, publicKeyPem) {
+  try {
+    const messageBuffer = Buffer.from(message, 'utf8');
+    const chunks = [];
+    
+    // Split message into chunks if it's too large
+    for (let i = 0; i < messageBuffer.length; i += RSA_MAX_CHUNK_SIZE) {
+      const chunk = messageBuffer.slice(i, i + RSA_MAX_CHUNK_SIZE);
+      const encryptedChunk = crypto.publicEncrypt(
+        {
+          key: publicKeyPem,
+          padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+          oaepHash: 'sha256'
+        },
+        chunk
+      );
+      // Convert to URL-safe base64 for JSON transport
+      chunks.push(encryptedChunk.toString('base64'));
+    }
+    
+    return {
+      encryptedData: chunks,
+      algorithm: 'RSA-OAEP-2048'
+    };
+  } catch (error) {
+    console.error('RSA encryption error:', error);
+    throw error;
+  }
 }
 
-function decryptMessage(encryptedObj, key) {
+function decryptMessageRSA(encryptedObj) {
   try {
+    if (!encryptedObj.encryptedData || !Array.isArray(encryptedObj.encryptedData)) {
+      throw new Error('Invalid encrypted data format');
+    }
+    
+    if (!rsaPrivateKey) {
+      throw new Error('RSA private key not initialized');
+    }
+    
+    const decryptedChunks = [];
+    
+    // Decrypt each chunk
+    for (const encryptedChunkBase64 of encryptedObj.encryptedData) {
+      const encryptedChunk = Buffer.from(encryptedChunkBase64, 'base64');
+      const decryptedChunk = crypto.privateDecrypt(
+        {
+          key: rsaPrivateKey,
+          padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+          oaepHash: 'sha256'
+        },
+        encryptedChunk
+      );
+      decryptedChunks.push(decryptedChunk);
+    }
+    
+    // Combine all decrypted chunks
+    const fullMessage = Buffer.concat(decryptedChunks);
+    return fullMessage.toString('utf8');
+  } catch (error) {
+    console.error('RSA decryption error:', error);
+    return null;
+  }
+}
+
+// Legacy AES decryption functions (for backward compatibility with old messages)
+function deriveChatKey(pin1, pin2) {
+  // Create a shared key from both users' PINs
+  const combined = [pin1, pin2].sort().join(''); // Sort for consistency
+  return crypto.createHash('sha256').update(combined).digest('hex');
+}
+
+function decryptMessageAES(encryptedObj, key) {
+  try {
+    if (!encryptedObj.iv || !encryptedObj.encryptedData) {
+      return null;
+    }
     const algorithm = 'aes-256-cbc';
     const iv = Buffer.from(encryptedObj.iv, 'hex');
     const encryptedData = encryptedObj.encryptedData;
@@ -75,14 +188,29 @@ function decryptMessage(encryptedObj, key) {
     decrypted += decipher.final('utf8');
     return decrypted;
   } catch (e) {
+    console.error('AES decryption error:', e);
     return null;
   }
 }
 
-function deriveChatKey(pin1, pin2) {
-  // Create a shared key from both users' PINs
-  const combined = [pin1, pin2].sort().join(''); // Sort for consistency
-  return crypto.createHash('sha256').update(combined).digest('hex');
+// Universal decrypt function that detects message format and uses appropriate method
+function decryptMessageUniversal(encryptedObj, pin1 = null, pin2 = null) {
+  // Detect message format
+  if (encryptedObj.algorithm === 'RSA-OAEP-2048' || Array.isArray(encryptedObj.encryptedData)) {
+    // RSA format - no PINs needed
+    return decryptMessageRSA(encryptedObj);
+  } else if (encryptedObj.iv && typeof encryptedObj.encryptedData === 'string') {
+    // Legacy AES format - need PINs
+    if (!pin1 || !pin2) {
+      console.error('AES decryption requires PINs but none provided');
+      return null;
+    }
+    const chatKey = deriveChatKey(pin1, pin2);
+    return decryptMessageAES(encryptedObj, chatKey);
+  } else {
+    console.error('Unknown encryption format:', encryptedObj);
+    return null;
+  }
 }
 
 function getChatFileName(user1, user2) {
@@ -362,6 +490,203 @@ app.post('/api/update-pin', (req, res) => {
   res.json({ success: true });
 });
 
+// Generate or retrieve user RSA key pair endpoint
+app.get('/api/user-keys', (req, res) => {
+  console.log('GET /api/user-keys - Request received');
+  
+  if (!req.session.user) {
+    console.log('GET /api/user-keys - Not authenticated');
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+  
+  console.log('GET /api/user-keys - User:', req.session.user);
+  
+  const users = readUsers();
+  const user = users[req.session.user];
+  if (!user) {
+    console.log('GET /api/user-keys - User not found in database');
+    return res.status(404).json({ error: 'User not found' });
+  }
+  
+  // Generate key pair if user doesn't have one
+  if (!user.rsaKeyPair) {
+    try {
+      console.log(`Generating RSA key pair for user: ${req.session.user}`);
+      const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
+        modulusLength: 2048,
+        publicKeyEncoding: {
+          type: 'spki',
+          format: 'pem'
+        },
+        privateKeyEncoding: {
+          type: 'pkcs8',
+          format: 'pem'
+        }
+      });
+      
+      if (!publicKey || !privateKey) {
+        throw new Error('Key generation returned null keys');
+      }
+      
+      user.rsaKeyPair = {
+        publicKey: publicKey,
+        privateKey: privateKey
+      };
+      
+      writeUsers(users);
+      console.log(`Successfully generated RSA key pair for user: ${req.session.user}`);
+    } catch (error) {
+      console.error('Error generating key pair:', error);
+      console.error('Error stack:', error.stack);
+      return res.status(500).json({ 
+        error: 'Failed to generate key pair: ' + error.message 
+      });
+    }
+  }
+  
+  // Return both keys
+  res.json({
+    publicKey: user.rsaKeyPair.publicKey,
+    privateKey: user.rsaKeyPair.privateKey
+  });
+});
+
+// Regenerate user RSA key pair endpoint
+app.post('/api/user-keys', (req, res) => {
+  console.log('POST /api/user-keys - Request received');
+  
+  if (!req.session.user) {
+    console.log('POST /api/user-keys - Not authenticated');
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+  
+  console.log('POST /api/user-keys - User:', req.session.user);
+  
+  const users = readUsers();
+  const user = users[req.session.user];
+  if (!user) {
+    console.log('POST /api/user-keys - User not found in database');
+    return res.status(404).json({ error: 'User not found' });
+  }
+  
+  try {
+    console.log(`Regenerating RSA key pair for user: ${req.session.user}`);
+    
+    // Generate new key pair
+    const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
+      modulusLength: 2048,
+      publicKeyEncoding: {
+        type: 'spki',
+        format: 'pem'
+      },
+      privateKeyEncoding: {
+        type: 'pkcs8',
+        format: 'pem'
+      }
+    });
+    
+    if (!publicKey || !privateKey) {
+      throw new Error('Key generation returned null keys');
+    }
+    
+    // Replace old key pair
+    user.rsaKeyPair = {
+      publicKey: publicKey,
+      privateKey: privateKey
+    };
+    
+    writeUsers(users);
+    
+    console.log(`Successfully regenerated RSA key pair for user: ${req.session.user}`);
+    
+    // Return new keys
+    res.json({
+      publicKey: user.rsaKeyPair.publicKey,
+      privateKey: user.rsaKeyPair.privateKey
+    });
+  } catch (error) {
+    console.error('Error regenerating key pair:', error);
+    console.error('Error stack:', error.stack);
+    return res.status(500).json({ 
+      error: 'Failed to regenerate key pair: ' + error.message 
+    });
+  }
+});
+
+// Get recipient's public key endpoint
+app.get('/api/user/:username/public-key', (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+  
+  const username = req.params.username;
+  const users = readUsers();
+  const user = users[username];
+  
+  if (!user) {
+    return res.status(404).json({ error: 'User not found' });
+  }
+  
+  // Generate key pair if user doesn't have one
+  if (!user.rsaKeyPair) {
+    try {
+      const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
+        modulusLength: 2048,
+        publicKeyEncoding: {
+          type: 'spki',
+          format: 'pem'
+        },
+        privateKeyEncoding: {
+          type: 'pkcs8',
+          format: 'pem'
+        }
+      });
+      
+      user.rsaKeyPair = {
+        publicKey: publicKey,
+        privateKey: privateKey
+      };
+      
+      writeUsers(users);
+      console.log(`Auto-generated RSA key pair for user: ${username}`);
+    } catch (error) {
+      console.error('Error generating key pair:', error);
+      return res.status(500).json({ error: 'Failed to generate key pair' });
+    }
+  }
+  
+  // Return only public key (safe to share)
+  res.json({
+    publicKey: user.rsaKeyPair.publicKey,
+    username: username
+  });
+});
+
+// Update user public key (for sharing with others)
+app.post('/api/update-public-key', (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+  
+  const { publicKey } = req.body;
+  if (!publicKey) {
+    return res.status(400).json({ error: 'Public key is required' });
+  }
+  
+  const users = readUsers();
+  const user = users[req.session.user];
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  
+  if (!user.rsaKeyPair) {
+    user.rsaKeyPair = {};
+  }
+  
+  user.rsaKeyPair.publicKey = publicKey;
+  writeUsers(users);
+  
+  res.json({ success: true });
+});
+
 // Get sent files endpoint
 app.get('/api/sent-files', (req, res) => {
   if (!req.session.user) {
@@ -375,6 +700,14 @@ app.get('/api/sent-files', (req, res) => {
   
   const sentFiles = user.sentFiles || [];
   res.json(sentFiles);
+});
+
+// Get RSA public key endpoint (for clients to encrypt messages)
+app.get('/api/rsa-public-key', (req, res) => {
+  if (!rsaPublicKey) {
+    return res.status(500).json({ error: 'RSA public key not available' });
+  }
+  res.json({ publicKey: rsaPublicKey });
 });
 
 // Get chat messages endpoint
@@ -402,7 +735,7 @@ app.get('/api/chat/:recipient', (req, res) => {
       });
     }
     
-    // Read messages (they are encrypted on disk)
+    // Read messages (they are RSA encrypted on disk)
     let messages = [];
     try {
       messages = readChat(sender, recipient);
@@ -411,7 +744,7 @@ app.get('/api/chat/:recipient', (req, res) => {
       messages = [];
     }
     
-    // Return messages (client will decrypt)
+    // Return messages (encrypted with RSA - server will decrypt when requested)
     res.json({
       messages: messages,
       sender: sender,
@@ -429,11 +762,11 @@ app.post('/api/chat/send', (req, res) => {
     return res.status(401).json({ error: 'Not authenticated' });
   }
   
-  const { recipient, message, recipientPin } = req.body;
+  const { recipient, message, recipientPin, encrypted, encryptedFormat } = req.body;
   const sender = req.session.user;
   
-  if (!recipient || !message || !recipientPin) {
-    return res.status(400).json({ error: 'Missing required fields' });
+  if (!recipient || !message) {
+    return res.status(400).json({ error: 'Missing required fields: recipient and message' });
   }
   
   const users = readUsers();
@@ -442,26 +775,44 @@ app.post('/api/chat/send', (req, res) => {
     return res.status(404).json({ error: 'User not found' });
   }
   
-  const senderPin = users[sender].pin || '';
-  const recvPin = users[recipient].pin || '';
-  
-  // Verify recipient PIN
-  if (recvPin !== recipientPin) {
-    return res.status(401).json({ error: 'Invalid recipient PIN' });
+  // PIN verification is optional now (only for backward compatibility with old messages)
+  if (recipientPin) {
+    const recvPin = users[recipient].pin || '';
+    if (recvPin && recvPin !== recipientPin) {
+      return res.status(401).json({ error: 'Invalid recipient PIN' });
+    }
   }
   
-  // Derive encryption key from both PINs
-  const chatKey = deriveChatKey(senderPin, recvPin);
-  
-  // Encrypt message
-  const encrypted = encryptMessage(message, chatKey);
+  // Handle message encryption
+  let encryptedMessage;
+  if (encrypted && Array.isArray(message)) {
+    // Client has already encrypted the message with recipient's public key
+    encryptedMessage = {
+      encryptedData: message,
+      algorithm: 'RSA-OAEP-2048',
+      format: encryptedFormat || 'rsa-e2e' // End-to-end RSA
+    };
+  } else if (encrypted && typeof message === 'object' && message.encryptedData) {
+    // Already in encrypted format (full object)
+    encryptedMessage = message;
+  } else if (typeof message === 'string') {
+    // Plain text message - for backward compatibility, but this shouldn't happen in new flow
+    // In new flow, client should encrypt before sending
+    encryptedMessage = {
+      message: message, // Store as plaintext temporarily (not recommended)
+      encrypted: false
+    };
+  } else {
+    // Already in encrypted format
+    encryptedMessage = message;
+  }
   
   // Create message object
   const messageObj = {
     id: uuidv4(),
     from: sender,
     to: recipient,
-    message: encrypted, // Store encrypted
+    message: encryptedMessage, // Store encrypted
     time: new Date().toISOString(),
     encrypted: true
   };
@@ -548,13 +899,14 @@ app.get('/api/chat/conversations', (req, res) => {
   }
 });
 
-// Decrypt message endpoint (for verification)
+// Decrypt message endpoint (for backward compatibility with old AES messages only)
+// Note: New RSA messages should be decrypted client-side with user's private key
 app.post('/api/chat/decrypt', (req, res) => {
   if (!req.session.user) {
     return res.status(401).json({ error: 'Not authenticated' });
   }
   
-  const { recipient, encryptedMessage } = req.body;
+  const { recipient, encryptedMessage, recipientPin } = req.body;
   const sender = req.session.user;
   
   if (!recipient || !encryptedMessage) {
@@ -566,14 +918,27 @@ app.post('/api/chat/decrypt', (req, res) => {
     return res.status(404).json({ error: 'User not found' });
   }
   
-  const senderPin = users[sender].pin || '';
-  const recvPin = users[recipient].pin || '';
-  const chatKey = deriveChatKey(senderPin, recvPin);
+  // Only decrypt old AES messages server-side
+  // New RSA messages should be decrypted client-side
+  if (encryptedMessage.format === 'rsa-e2e' || (Array.isArray(encryptedMessage.encryptedData) && encryptedMessage.algorithm === 'RSA-OAEP-2048')) {
+    return res.status(400).json({ error: 'RSA messages must be decrypted client-side using your private key' });
+  }
   
-  const decrypted = decryptMessage(encryptedMessage, chatKey);
+  // Get PINs for backward compatibility with AES-encrypted messages
+  const senderPin = users[sender].pin || '';
+  const recvPin = users[recipient].pin || recipientPin || '';
+  
+  // Try to decrypt using universal decrypt function (only for old AES messages)
+  let decrypted = null;
+  try {
+    decrypted = decryptMessageUniversal(encryptedMessage, senderPin, recvPin);
+  } catch (error) {
+    console.error('Decryption error:', error);
+    return res.status(400).json({ error: 'Failed to decrypt: ' + error.message });
+  }
   
   if (!decrypted) {
-    return res.status(400).json({ error: 'Failed to decrypt' });
+    return res.status(400).json({ error: 'Failed to decrypt - may need recipient PIN for old AES messages' });
   }
   
   res.json({ decrypted });

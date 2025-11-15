@@ -53,12 +53,68 @@
     </div>
   </nav>
 
+  <!-- User Private Key Display (Top Corner) -->
+  <div id="userPrivateKeyDisplay" style="position:fixed;top:70px;right:10px;background:#fff;padding:12px;border:2px solid #4caf50;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);max-width:500px;max-height:calc(100vh - 90px);overflow-y:auto;z-index:1001;display:none;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <strong style="color:#4caf50">🔑 Key Management</strong>
+      <button onclick="togglePrivateKeyDisplay()" style="background:none;border:none;cursor:pointer;font-size:18px">×</button>
+    </div>
+    
+    <!-- Key Management Options -->
+    <div style="margin-bottom:12px;padding:8px;background:#f9fafb;border-radius:4px;border:1px solid #e5e7eb">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:8px">
+        <input type="radio" name="keyMode" value="auto" id="keyModeAuto" checked onchange="toggleKeyInputMode()" />
+        <span>Auto-generate keys</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+        <input type="radio" name="keyMode" value="manual" id="keyModeManual" onchange="toggleKeyInputMode()" />
+        <span>Enter keys manually</span>
+      </label>
+    </div>
+
+    <!-- Auto-generate mode -->
+    <div id="autoKeyMode" style="display:block">
+      <label style="font-size:0.9em;color:#666;display:block;margin-bottom:4px">Your Private Key:</label>
+      <textarea id="userPrivateKeyText" readonly style="width:100%;height:150px;font-family:monospace;font-size:11px;padding:8px;border:1px solid #ddd;border-radius:4px;resize:none;word-break:break-all" placeholder="Your private key will appear here"></textarea>
+      <div style="margin-top:8px;display:flex;gap:8px">
+        <button onclick="copyPrivateKey()" style="padding:6px 12px;background:#4caf50;color:white;border:none;border-radius:4px;cursor:pointer">Copy Private Key</button>
+        <button onclick="generateNewKeyPair(event)" style="padding:6px 12px;background:#f59e0b;color:white;border:none;border-radius:4px;cursor:pointer">Generate New Keys</button>
+        <button onclick="copyPublicKey()" style="padding:6px 12px;background:#3b82f6;color:white;border:none;border-radius:4px;cursor:pointer">Copy Public Key</button>
+      </div>
+    </div>
+
+    <!-- Manual input mode -->
+    <div id="manualKeyMode" style="display:none">
+      <label style="font-size:0.9em;color:#666;display:block;margin-bottom:4px">Private Key (paste here):</label>
+      <textarea id="manualPrivateKey" placeholder="Paste your private key here" style="width:100%;height:120px;font-family:monospace;font-size:11px;padding:8px;border:1px solid #ddd;border-radius:4px;resize:vertical;word-break:break-all"></textarea>
+      
+      <label style="font-size:0.9em;color:#666;display:block;margin-top:12px;margin-bottom:4px">Public Key (paste here):</label>
+      <textarea id="manualPublicKey" placeholder="Paste your public key here" style="width:100%;height:120px;font-family:monospace;font-size:11px;padding:8px;border:1px solid #ddd;border-radius:4px;resize:vertical;word-break:break-all"></textarea>
+      
+      <button onclick="saveManualKeys()" style="margin-top:12px;padding:8px 16px;background:#4caf50;color:white;border:none;border-radius:4px;cursor:pointer;width:100%">Save Manual Keys</button>
+    </div>
+
+    <!-- PIN Generator -->
+    <div style="margin-top:16px;padding:12px;background:#fef3c7;border-radius:4px;border:1px solid #fbbf24">
+      <label style="font-size:0.9em;color:#666;display:block;margin-bottom:8px"><strong>🔢 Generate 4-Digit PIN:</strong></label>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="text" id="generatedPIN" readonly style="flex:1;padding:8px;font-size:18px;font-weight:bold;text-align:center;border:1px solid #ddd;border-radius:4px;letter-spacing:4px" placeholder="0000" />
+        <button onclick="generateRandomPIN()" style="padding:8px 16px;background:#f59e0b;color:white;border:none;border-radius:4px;cursor:pointer">Generate</button>
+        <button onclick="copyPIN()" style="padding:8px 16px;background:#3b82f6;color:white;border:none;border-radius:4px;cursor:pointer">Copy</button>
+      </div>
+      <p class="muted small" style="margin-top:8px;font-size:0.75em">Use this for legacy AES-encrypted messages or file transfers</p>
+    </div>
+  </div>
+
   <main class="card" style="max-width:900px;margin:28px auto;margin-top:80px">
     <header style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
       <div>
         <h2 id="pageTitle">Dashboard</h2>
         <p class="small muted" id="welcomeText">Welcome!</p>
       </div>
+      <button onclick="togglePrivateKeyDisplay()" style="padding:8px 16px;background:#4caf50;color:white;border:none;border-radius:4px;cursor:pointer">
+        🔑 Show Private Key
+      </button>
     </header>
 
     <!-- Dashboard Content -->
@@ -192,18 +248,48 @@
           </div>
           
           <div id="chatInputArea" style="display:none">
-            <div style="margin-bottom:8px">
-              <label style="font-size:0.9em;color:#666">Recipient PIN (to decrypt messages):</label>
-              <input type="password" id="chatRecipientPin" placeholder="Enter recipient's 4-digit PIN" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;margin-top:4px" pattern="\d{4}" oninput="if(currentChatRecipient && this.value.length === 4) { setTimeout(() => loadChatMessages(currentChatRecipient), 300); }" />
-              <p class="muted small" style="margin-top:4px;font-size:0.8em">Enter the recipient's PIN to decrypt their messages. Your messages are automatically decrypted.</p>
+            <!-- Sending Section -->
+            <div style="margin-bottom:16px;padding:12px;background:#f9fafb;border-radius:8px;border:1px solid #e5e7eb">
+              <h4 style="margin:0 0 12px 0;font-size:14px;color:#374151">📤 Sending Messages</h4>
+              <div style="margin-bottom:12px">
+                <label style="font-size:0.9em;color:#666;display:block;margin-bottom:4px">Your Private Key (for signing/verification):</label>
+                <textarea id="senderPrivateKey" placeholder="Paste your private key here" style="width:100%;height:80px;font-family:monospace;font-size:11px;padding:8px;border:1px solid #ddd;border-radius:4px;resize:vertical"></textarea>
             </div>
+              <div style="margin-bottom:12px">
+                <label style="font-size:0.9em;color:#666;display:block;margin-bottom:4px">Recipient's Public Key (for encryption):</label>
+                <textarea id="recipientPublicKey" placeholder="Paste recipient's public key here" style="width:100%;height:80px;font-family:monospace;font-size:11px;padding:8px;border:1px solid #ddd;border-radius:4px;resize:vertical"></textarea>
+              </div>
+              <p class="muted small" style="margin-top:4px;font-size:0.8em">
+                🔒 Messages are encrypted with recipient's public key. Only they can decrypt with their private key.
+              </p>
+            </div>
+
+            <!-- Receiving Section -->
+            <div style="margin-bottom:16px;padding:12px;background:#fef3c7;border-radius:8px;border:1px solid #fbbf24">
+              <h4 style="margin:0 0 12px 0;font-size:14px;color:#92400e">📥 Receiving Messages</h4>
+              <div style="margin-bottom:12px">
+                <label style="font-size:0.9em;color:#666;display:block;margin-bottom:4px">Sender's Public Key (for verification):</label>
+                <textarea id="senderPublicKey" placeholder="Paste sender's public key here" style="width:100%;height:80px;font-family:monospace;font-size:11px;padding:8px;border:1px solid #ddd;border-radius:4px;resize:vertical"></textarea>
+              </div>
+              <div style="margin-bottom:12px">
+                <label style="font-size:0.9em;color:#666;display:block;margin-bottom:4px">Your Private Key (for decryption):</label>
+                <textarea id="receiverPrivateKey" placeholder="Paste your private key here" style="width:100%;height:80px;font-family:monospace;font-size:11px;padding:8px;border:1px solid #ddd;border-radius:4px;resize:vertical"></textarea>
+              </div>
+              <div style="display:flex;gap:8px;margin-bottom:8px;position:relative;z-index:10">
+                <button onclick="reloadChatMessages()" style="flex:1;padding:8px 16px;background:#3b82f6;color:white;border:none;border-radius:4px;cursor:pointer;font-size:14px;position:relative;z-index:10" type="button">
+                  🔄 Reload & Decrypt Messages
+                </button>
+              </div>
+              <p class="muted small" style="margin-top:4px;font-size:0.8em">
+                🔓 Paste your private key and click "Reload & Decrypt" to decrypt received messages. Messages were encrypted with your public key.
+              </p>
+            </div>
+
+
             <form id="chatForm" style="display:flex;gap:8px">
               <input type="text" id="chatMessageInput" placeholder="Type a message..." style="flex:1;padding:10px;border:1px solid #ddd;border-radius:8px" required />
               <button type="submit" class="btn primary">Send</button>
             </form>
-            <p class="muted small" style="margin-top:8px">
-              <span style="color:#4caf50">🔒</span> Messages are end-to-end encrypted using AES-256
-            </p>
           </div>
         </div>
       </div>
@@ -492,78 +578,515 @@
       loadConversations();
     }
 
-    // Client-side encryption/decryption using Web Crypto API
-    async function deriveKeyFromPINs(pin1, pin2) {
-      const combined = [pin1, pin2].sort().join('');
-      const encoder = new TextEncoder();
-      const data = encoder.encode(combined);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-      return new Uint8Array(hashBuffer);
+    // User's key pair (loaded from server)
+    let userPrivateKey = null;
+    let userPublicKey = null;
+    
+    // Load user's RSA key pair from server
+    async function loadUserKeys() {
+      try {
+        const response = await fetch('/api/user-keys', { credentials: 'same-origin' });
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+          throw new Error(errorData.error || 'Failed to load user keys. Status: ' + response.status);
+        }
+        const data = await response.json();
+        
+        if (!data.privateKey || !data.publicKey) {
+          throw new Error('Invalid key data received from server');
+        }
+        
+        userPrivateKey = data.privateKey;
+        userPublicKey = data.publicKey;
+        
+        // Display private key in UI (only if auto mode)
+        if (document.getElementById('keyModeAuto')?.checked !== false) {
+          document.getElementById('userPrivateKeyText').value = userPrivateKey;
+        }
+        
+        // Auto-fill manual key inputs if in manual mode and not already filled
+        if (document.getElementById('keyModeManual')?.checked) {
+          if (!document.getElementById('manualPrivateKey').value) {
+            document.getElementById('manualPrivateKey').value = userPrivateKey;
+          }
+          if (!document.getElementById('manualPublicKey').value) {
+            document.getElementById('manualPublicKey').value = userPublicKey;
+          }
+        } else {
+          // Auto-fill private key fields if not already filled (auto mode)
+          if (!document.getElementById('senderPrivateKey').value) {
+            document.getElementById('senderPrivateKey').value = userPrivateKey;
+          }
+          if (!document.getElementById('receiverPrivateKey').value) {
+            document.getElementById('receiverPrivateKey').value = userPrivateKey;
+          }
+        }
+        
+        console.log('User keys loaded successfully');
+      } catch (error) {
+        console.error('Error loading user keys:', error);
+        throw error;
+      }
     }
 
-    async function encryptMessageClient(message, pin1, pin2) {
+    // Toggle private key display
+    function togglePrivateKeyDisplay() {
+      const display = document.getElementById('userPrivateKeyDisplay');
+      display.style.display = display.style.display === 'none' ? 'block' : 'none';
+    }
+
+    // Copy private key to clipboard
+    async function copyPrivateKey() {
+      const keyText = document.getElementById('userPrivateKeyText').value;
+      if (!keyText) {
+        alert('No private key to copy');
+        return;
+      }
       try {
-        const key = await deriveKeyFromPINs(pin1, pin2);
-        const keyBuffer = key.buffer.slice(0, 32); // Use first 32 bytes for AES-256
-        const cryptoKey = await crypto.subtle.importKey(
-          'raw',
-          keyBuffer,
-          { name: 'AES-CBC' },
+        await navigator.clipboard.writeText(keyText);
+        alert('Private key copied to clipboard!');
+      } catch (error) {
+        // Fallback for older browsers
+        document.getElementById('userPrivateKeyText').select();
+        document.execCommand('copy');
+        alert('Private key copied to clipboard!');
+      }
+    }
+
+    // Copy public key to clipboard
+    async function copyPublicKey() {
+      if (!userPublicKey) {
+        alert('No public key available');
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(userPublicKey);
+        alert('Public key copied to clipboard!');
+      } catch (error) {
+        // Fallback for older browsers
+        const textarea = document.createElement('textarea');
+        textarea.value = userPublicKey;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        alert('Public key copied to clipboard!');
+      }
+    }
+
+    // Toggle between auto and manual key input mode
+    function toggleKeyInputMode() {
+      const autoMode = document.getElementById('keyModeAuto').checked;
+      const autoDiv = document.getElementById('autoKeyMode');
+      const manualDiv = document.getElementById('manualKeyMode');
+      
+      if (autoMode) {
+        autoDiv.style.display = 'block';
+        manualDiv.style.display = 'none';
+      } else {
+        autoDiv.style.display = 'none';
+        manualDiv.style.display = 'block';
+      }
+    }
+
+    // Save manually entered keys
+    async function saveManualKeys() {
+      const privateKey = document.getElementById('manualPrivateKey').value.trim();
+      const publicKey = document.getElementById('manualPublicKey').value.trim();
+      
+      if (!privateKey || !publicKey) {
+        alert('Please enter both private and public keys');
+        return;
+      }
+      
+      // Validate key format (basic check)
+      if (!privateKey.includes('BEGIN PRIVATE KEY') && !privateKey.includes('BEGIN RSA PRIVATE KEY')) {
+        if (!confirm('Private key format may be incorrect. Continue anyway?')) {
+          return;
+        }
+      }
+      
+      if (!publicKey.includes('BEGIN PUBLIC KEY')) {
+        if (!confirm('Public key format may be incorrect. Continue anyway?')) {
+          return;
+        }
+      }
+      
+      try {
+        // Update local variables
+        userPrivateKey = privateKey;
+        userPublicKey = publicKey;
+        
+        // Update UI fields
+        document.getElementById('userPrivateKeyText').value = privateKey;
+        document.getElementById('senderPrivateKey').value = privateKey;
+        document.getElementById('receiverPrivateKey').value = privateKey;
+        
+        // Save to server (optional - for persistence)
+        try {
+          const response = await fetch('/api/update-public-key', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ publicKey: publicKey })
+          });
+          
+          if (response.ok) {
+            console.log('Public key saved to server');
+          }
+        } catch (e) {
+          console.warn('Could not save public key to server:', e);
+        }
+        
+        alert('Keys saved successfully!');
+        togglePrivateKeyDisplay(); // Close the dialog
+      } catch (error) {
+        console.error('Error saving keys:', error);
+        alert('Error saving keys: ' + error.message);
+      }
+    }
+
+    // Generate random 4-digit PIN
+    function generateRandomPIN() {
+      // Generate a random 4-digit number (1000-9999)
+      const pin = Math.floor(1000 + Math.random() * 9000).toString();
+      document.getElementById('generatedPIN').value = pin;
+    }
+
+    // Copy generated PIN
+    async function copyPIN() {
+      const pin = document.getElementById('generatedPIN').value;
+      if (!pin) {
+        alert('Generate a PIN first');
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(pin);
+        alert('PIN copied to clipboard!');
+      } catch (error) {
+        // Fallback for older browsers
+        document.getElementById('generatedPIN').select();
+        document.execCommand('copy');
+        alert('PIN copied to clipboard!');
+      }
+    }
+
+    // Generate new key pair
+    async function generateNewKeyPair(event) {
+      if (!confirm('Generate a new key pair? This will replace your existing keys and you won\'t be able to decrypt old messages encrypted with the old keys!')) {
+        return;
+      }
+      
+      // Get button element
+      const button = event && event.target ? event.target : document.querySelector('button[onclick*="generateNewKeyPair"]');
+      const originalText = button ? button.textContent : 'Generate New Keys';
+      
+      try {
+        // Show loading state
+        if (button) {
+          button.textContent = 'Generating...';
+          button.disabled = true;
+        }
+        
+        // Request server to generate new keys
+        const response = await fetch('/api/user-keys', { 
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin' 
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+          throw new Error(errorData.error || 'Failed to generate new keys');
+        }
+        
+        const data = await response.json();
+        
+        if (!data.privateKey || !data.publicKey) {
+          throw new Error('Invalid key pair received from server');
+        }
+        
+        // Update local variables
+        userPrivateKey = data.privateKey;
+        userPublicKey = data.publicKey;
+        
+        // Update UI
+        if (document.getElementById('keyModeAuto')?.checked !== false) {
+          document.getElementById('userPrivateKeyText').value = userPrivateKey;
+        }
+        document.getElementById('senderPrivateKey').value = userPrivateKey;
+        document.getElementById('receiverPrivateKey').value = userPrivateKey;
+        
+        // Also update manual inputs if visible
+        if (document.getElementById('keyModeManual')?.checked) {
+          document.getElementById('manualPrivateKey').value = userPrivateKey;
+          document.getElementById('manualPublicKey').value = userPublicKey;
+        }
+        
+        // Restore button
+        if (button) {
+          button.textContent = originalText;
+          button.disabled = false;
+        }
+        
+        alert('New key pair generated successfully!');
+      } catch (error) {
+        console.error('Error generating new keys:', error);
+        alert('Failed to generate new keys: ' + error.message + '\n\nPlease check:\n- You are logged in\n- Server is running and restarted\n- Check browser console for details');
+        
+        // Restore button on error
+        if (button) {
+          button.textContent = originalText;
+          button.disabled = false;
+        }
+      }
+    }
+    
+    // Convert PEM format to ArrayBuffer for Web Crypto API
+    function pemToArrayBuffer(pem) {
+      // Handle both public and private keys
+      const base64 = pem
+        .replace(/-----BEGIN PUBLIC KEY-----/g, '')
+        .replace(/-----END PUBLIC KEY-----/g, '')
+        .replace(/-----BEGIN PRIVATE KEY-----/g, '')
+        .replace(/-----END PRIVATE KEY-----/g, '')
+        .replace(/-----BEGIN RSA PRIVATE KEY-----/g, '')
+        .replace(/-----END RSA PRIVATE KEY-----/g, '')
+        .replace(/\s/g, '');
+      const binaryString = atob(base64);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      return bytes.buffer;
+    }
+
+    // Client-side RSA encryption using Web Crypto API
+    // RSA-OAEP can encrypt max ~214 bytes per chunk for 2048-bit keys
+    const RSA_MAX_CHUNK_SIZE = 214; // bytes per chunk
+    
+    // Encrypt message with recipient's public key (client-side)
+    async function encryptMessageClient(message, recipientPublicKeyPem) {
+      try {
+        if (!recipientPublicKeyPem) {
+          throw new Error('Recipient public key is required');
+        }
+        
+        // Import the recipient's public key
+        const keyData = pemToArrayBuffer(recipientPublicKeyPem);
+        const recipientPublicKey = await crypto.subtle.importKey(
+          'spki',
+          keyData,
+          {
+            name: 'RSA-OAEP',
+            hash: 'SHA-256'
+          },
           false,
           ['encrypt']
         );
         
-        const iv = crypto.getRandomValues(new Uint8Array(16));
         const encoder = new TextEncoder();
-        const data = encoder.encode(message);
+        const messageBuffer = encoder.encode(message);
+        const chunks = [];
         
-        const encrypted = await crypto.subtle.encrypt(
-          { name: 'AES-CBC', iv: iv },
-          cryptoKey,
-          data
-        );
+        // Split message into chunks if it's too large
+        for (let i = 0; i < messageBuffer.length; i += RSA_MAX_CHUNK_SIZE) {
+          const chunk = messageBuffer.slice(i, i + RSA_MAX_CHUNK_SIZE);
+          
+          const encryptedChunk = await crypto.subtle.encrypt(
+            {
+              name: 'RSA-OAEP'
+            },
+            recipientPublicKey,
+            chunk
+          );
+          
+          // Convert to base64 for JSON transport
+          const base64Chunk = btoa(String.fromCharCode.apply(null, new Uint8Array(encryptedChunk)));
+          chunks.push(base64Chunk);
+        }
         
         return {
-          iv: Array.from(iv).map(b => b.toString(16).padStart(2, '0')).join(''),
-          encryptedData: Array.from(new Uint8Array(encrypted)).map(b => b.toString(16).padStart(2, '0')).join('')
+          encryptedData: chunks,
+          algorithm: 'RSA-OAEP-2048',
+          format: 'rsa-e2e'
         };
       } catch (e) {
-        console.error('Encryption error:', e);
+        console.error('RSA encryption error:', e);
         throw e;
       }
     }
 
-    async function decryptMessageClient(encryptedObj, pin1, pin2) {
+    // Decrypt message with user's private key (client-side)
+    async function decryptMessageClient(encryptedObj, privateKeyPem) {
       try {
-        const key = await deriveKeyFromPINs(pin1, pin2);
-        const keyBuffer = key.buffer.slice(0, 32);
-        const cryptoKey = await crypto.subtle.importKey(
-          'raw',
-          keyBuffer,
-          { name: 'AES-CBC' },
+        if (!privateKeyPem || privateKeyPem.trim() === '') {
+          throw new Error('Private key is required for decryption');
+        }
+        
+        if (!encryptedObj || typeof encryptedObj !== 'object') {
+          throw new Error('Invalid encrypted message object');
+        }
+        
+        if (!encryptedObj.encryptedData || !Array.isArray(encryptedObj.encryptedData)) {
+          throw new Error('Invalid encrypted message format - encryptedData must be an array');
+        }
+        
+        if (encryptedObj.encryptedData.length === 0) {
+          throw new Error('Invalid encrypted message - no encrypted chunks found');
+        }
+        
+        // Validate private key format
+        if (!privateKeyPem.includes('BEGIN PRIVATE KEY') && !privateKeyPem.includes('BEGIN RSA PRIVATE KEY')) {
+          throw new Error('Invalid private key format - must be PEM format');
+        }
+        
+        // Import the private key
+        let keyData;
+        try {
+          keyData = pemToArrayBuffer(privateKeyPem);
+        } catch (e) {
+          throw new Error('Failed to parse private key: ' + (e.message || 'Invalid format'));
+        }
+        
+        let privateKey;
+        try {
+          privateKey = await crypto.subtle.importKey(
+            'pkcs8',
+            keyData,
+            {
+              name: 'RSA-OAEP',
+              hash: 'SHA-256'
+            },
           false,
           ['decrypt']
         );
+        } catch (e) {
+          throw new Error('Failed to import private key: ' + (e.message || 'Invalid key format'));
+        }
         
-        const iv = new Uint8Array(encryptedObj.iv.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
-        const encrypted = new Uint8Array(encryptedObj.encryptedData.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+        const decryptedChunks = [];
         
-        const decrypted = await crypto.subtle.decrypt(
-          { name: 'AES-CBC', iv: iv },
-          cryptoKey,
-          encrypted
-        );
+        // Decrypt each chunk
+        for (let i = 0; i < encryptedObj.encryptedData.length; i++) {
+          const encryptedChunkBase64 = encryptedObj.encryptedData[i];
+          
+          if (!encryptedChunkBase64 || typeof encryptedChunkBase64 !== 'string') {
+            throw new Error(`Invalid encrypted chunk at index ${i}`);
+          }
+          
+          // Convert base64 to ArrayBuffer
+          let binaryString;
+          try {
+            binaryString = atob(encryptedChunkBase64);
+          } catch (e) {
+            throw new Error(`Invalid base64 in chunk ${i}: ${e.message || 'Invalid format'}`);
+          }
+          
+          const bytes = new Uint8Array(binaryString.length);
+          for (let j = 0; j < binaryString.length; j++) {
+            bytes[j] = binaryString.charCodeAt(j);
+          }
+          
+          let decryptedChunk;
+          try {
+            decryptedChunk = await crypto.subtle.decrypt(
+              {
+                name: 'RSA-OAEP'
+              },
+              privateKey,
+              bytes.buffer
+            );
+          } catch (e) {
+            // More specific error for decryption failures
+            if (e.name === 'OperationError' || e.message?.includes('decrypt')) {
+              throw new Error('Decryption failed - private key does not match the public key used for encryption. Chunk: ' + i);
+            }
+            throw new Error(`Failed to decrypt chunk ${i}: ${e.message || e.toString()}`);
+          }
+          
+          decryptedChunks.push(decryptedChunk);
+        }
         
+        // Combine all decrypted chunks
+        const totalLength = decryptedChunks.reduce((acc, chunk) => acc + chunk.byteLength, 0);
+        const fullMessage = new Uint8Array(totalLength);
+        let offset = 0;
+        for (const chunk of decryptedChunks) {
+          fullMessage.set(new Uint8Array(chunk), offset);
+          offset += chunk.byteLength;
+        }
+        
+        // Convert to string
         const decoder = new TextDecoder();
-        return decoder.decode(decrypted);
+        const result = decoder.decode(fullMessage);
+        
+        if (!result || result.trim() === '') {
+          throw new Error('Decryption resulted in empty message');
+        }
+        
+        return result;
       } catch (e) {
-        console.error('Decryption error:', e);
-        return null;
+        console.error('RSA decryption error:', e);
+        console.error('Error details:', {
+          name: e.name,
+          message: e.message,
+          stack: e.stack
+        });
+        // Re-throw with better error message
+        const errorMsg = e.message || e.name || e.toString() || 'Unknown decryption error';
+        throw new Error(errorMsg);
       }
     }
 
     let currentChatRecipient = null;
     let chatPollInterval = null;
+
+    // Reload chat messages function (for manual reload after pasting keys)
+    async function reloadChatMessages() {
+      console.log('reloadChatMessages called');
+      if (!currentChatRecipient) {
+        alert('Please select a conversation first');
+        return;
+      }
+      
+      // Show loading indicator
+      const messagesDiv = document.getElementById('chatMessages');
+      if (!messagesDiv) {
+        console.error('chatMessages div not found');
+        return;
+      }
+      const originalContent = messagesDiv.innerHTML;
+      messagesDiv.innerHTML = '<p class="muted small" style="text-align:center">🔄 Reloading and decrypting messages...</p>';
+      
+      try {
+        await loadChatMessages(currentChatRecipient);
+      } catch (error) {
+        console.error('Error reloading messages:', error);
+        messagesDiv.innerHTML = '<p class="error" style="text-align:center;color:#f44336">Error reloading messages: ' + error.message + '</p>';
+      }
+    }
+    
+    // Helper function to attach reload button event listener
+    function attachReloadButtonListener() {
+      const reloadBtn = document.querySelector('button[onclick="reloadChatMessages()"]');
+      if (reloadBtn && !reloadBtn.hasAttribute('data-listener-attached')) {
+        reloadBtn.setAttribute('data-listener-attached', 'true');
+        // Keep onclick as backup, but also add event listener
+        reloadBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          console.log('Reload button clicked via event listener');
+          reloadChatMessages();
+        }, { capture: true });
+      }
+    }
+    
+    // Add event listener for reload button when chat opens
+    document.addEventListener('DOMContentLoaded', function() {
+      // Try to attach event listener after page loads
+      setTimeout(attachReloadButtonListener, 500);
+    });
 
     // Load conversations list
     async function loadConversations() {
@@ -604,9 +1127,52 @@
       document.getElementById('chatStatus').textContent = 'End-to-end encrypted chat';
       document.getElementById('chatStatus').style.color = '';
       document.getElementById('chatInputArea').style.display = 'block';
+      // Attach reload button listener when chat input area is shown
+      setTimeout(attachReloadButtonListener, 100);
       
-      // Clear PIN input when opening new chat
-      document.getElementById('chatRecipientPin').value = '';
+      // Load recipient's public key automatically
+      try {
+        const response = await fetch(`/api/user/${recipient}/public-key`, { credentials: 'same-origin' });
+        if (response.ok) {
+          const data = await response.json();
+          // Auto-fill recipient's public key
+          document.getElementById('recipientPublicKey').value = data.publicKey;
+          console.log(`Loaded public key for ${recipient}`);
+        } else {
+          console.warn('Could not load recipient public key:', await response.json().catch(() => ({})));
+        }
+      } catch (error) {
+        console.error('Error loading recipient public key:', error);
+      }
+      
+      // Ensure user's own keys are loaded
+      if (!userPrivateKey || !userPublicKey) {
+        try {
+          await loadUserKeys();
+        } catch (error) {
+          console.error('Error loading user keys:', error);
+        }
+      }
+      
+      // Auto-fill user's private key if not already filled
+      const senderPrivateKeyInput = document.getElementById('senderPrivateKey');
+      const receiverPrivateKeyInput = document.getElementById('receiverPrivateKey');
+      
+      if (senderPrivateKeyInput && !senderPrivateKeyInput.value && userPrivateKey) {
+        senderPrivateKeyInput.value = userPrivateKey;
+        console.log('Auto-filled sender private key');
+      }
+      if (receiverPrivateKeyInput && !receiverPrivateKeyInput.value && userPrivateKey) {
+        receiverPrivateKeyInput.value = userPrivateKey;
+        console.log('Auto-filled receiver private key');
+      }
+      
+      // Log current keys for debugging
+      if (userPublicKey) {
+        console.log('Current user public key preview:', userPublicKey.substring(0, 100) + '...');
+        console.log('IMPORTANT: Messages encrypted with a DIFFERENT public key cannot be decrypted with your current private key.');
+        console.log('If you regenerated your keys, old messages will not decrypt.');
+      }
       
       await loadChatMessages(recipient);
       
@@ -642,15 +1208,6 @@
             if (userR.ok) userData = await userR.json();
           }
           
-          const myPin = userData.pin || '';
-          const recipientPin = document.getElementById('chatRecipientPin')?.value || '';
-          
-          // If no PIN entered and messages are encrypted, show placeholder
-          if (!recipientPin && data.messages.some(m => m.encrypted)) {
-            messagesDiv.innerHTML = '<p class="muted small" style="text-align:center">Enter recipient PIN above to decrypt messages</p>';
-            return;
-          }
-          
           // Process messages sequentially to avoid race conditions
           const messagesHtml = [];
           for (const msg of data.messages) {
@@ -678,55 +1235,92 @@
             
             let messageText = '';
             
-            // Handle encrypted messages (new format)
+            // Handle encrypted messages (RSA end-to-end or legacy AES format)
             if (msg.encrypted && msg.message && typeof msg.message === 'object' && msg.message.encryptedData) {
+              // Check if it's RSA end-to-end format
+              if (msg.message.format === 'rsa-e2e' || (Array.isArray(msg.message.encryptedData) && msg.message.algorithm === 'RSA-OAEP-2048')) {
+                // RSA end-to-end - decrypt client-side with user's private key
+                // IMPORTANT: In RSA, only the RECIPIENT can decrypt (they were the one who provided the public key for encryption)
+                // If you're the sender, you CANNOT decrypt your own sent messages (they were encrypted with recipient's public key)
+                
               if (isMine) {
-                // For my own messages, try decrypting with my PIN and recipient PIN
-                if (recipientPin && myPin) {
-                  try {
-                    const decrypted = await decryptMessageClient(msg.message, myPin, recipientPin);
-                    messageText = decrypted || '[Failed to decrypt my message]';
-                  } catch (e) {
-                    messageText = '[Decryption error]';
-                  }
+                  // For messages I sent: They were encrypted with recipient's public key, so I cannot decrypt them
+                  // The recipient would decrypt with their private key
+                  messageText = '[Your sent message - encrypted with recipient\'s public key. Only they can decrypt it.]';
                 } else {
-                  messageText = '[My encrypted message - enter recipient PIN]';
-                }
+                  // For messages I received: They were encrypted with MY public key, so I can decrypt with MY private key
+                  const receiverPrivateKey = document.getElementById('receiverPrivateKey').value.trim();
+                  
+                  if (!receiverPrivateKey) {
+                    messageText = '[Encrypted - Enter your private key to decrypt]';
+                  } else {
+                    // Debug: Log message structure and key info
+                    console.log('Attempting to decrypt message:', {
+                      messageId: msg.id,
+                      from: msg.from,
+                      to: msg.to,
+                      hasEncryptedData: !!msg.message?.encryptedData,
+                      encryptedDataLength: msg.message?.encryptedData?.length,
+                      format: msg.message?.format,
+                      algorithm: msg.message?.algorithm,
+                      privateKeyLength: receiverPrivateKey.length,
+                      privateKeyPreview: receiverPrivateKey.substring(0, 50) + '...'
+                    });
+                    
+                    try {
+                      // Validate message structure before decryption
+                      if (!msg.message || typeof msg.message !== 'object') {
+                        throw new Error('Invalid message structure - message is not an object');
+                      }
+                      
+                      if (!msg.message.encryptedData || !Array.isArray(msg.message.encryptedData)) {
+                        throw new Error('Invalid encrypted message format - encryptedData is missing or not an array');
+                      }
+                      
+                      if (msg.message.encryptedData.length === 0) {
+                        throw new Error('Invalid encrypted message - no encrypted chunks found');
+                      }
+                      
+                      messageText = await decryptMessageClient(msg.message, receiverPrivateKey);
+                      if (!messageText || messageText.trim() === '') {
+                        messageText = '[Decryption failed - check your private key]';
               } else {
-                // For recipient's messages, need their PIN
-                if (recipientPin && myPin) {
-                  try {
-                    const decrypted = await decryptMessageClient(msg.message, myPin, recipientPin);
-                    if (decrypted) {
-                      messageText = decrypted;
-                    } else {
-                      messageText = '[Failed to decrypt - check PIN]';
+                        console.log('Decryption successful for message:', msg.id);
                     }
                   } catch (e) {
-                    console.error('Decryption error:', e);
-                    messageText = '[Decryption error - check PIN]';
-                  }
+                      console.error('RSA decryption error:', e);
+                      console.error('Full error object:', e);
+                      console.error('Message structure:', JSON.stringify(msg.message, null, 2));
+                      const errorMsg = e.message || e.name || e.toString() || 'Unknown decryption error';
+                      console.error('Extracted error message:', errorMsg);
+                      
+                      // Provide more helpful error messages
+                      if (errorMsg.toLowerCase().includes('bad decrypt') || errorMsg.toLowerCase().includes('decrypt') || errorMsg.includes('OperationError') || errorMsg.includes('does not match')) {
+                        messageText = '[Decryption failed - private key mismatch.\n\nPossible causes:\n1. The message was encrypted with a different public key\n2. You are using a private key that doesn\'t match the public key used for encryption\n3. The keys were regenerated after the message was sent\n\nSolution: Make sure you are using the private key that matches the public key that was active when the message was encrypted.]';
+                      } else if (errorMsg.includes('Invalid') || errorMsg.includes('invalid')) {
+                        messageText = '[Invalid message format - message may be corrupted. Error: ' + errorMsg + ']';
+                      } else if (errorMsg.toLowerCase().includes('key') || errorMsg.toLowerCase().includes('format')) {
+                        messageText = '[Invalid private key - check the key format. Make sure it includes BEGIN and END lines. Error: ' + errorMsg + ']';
+                      } else if (errorMsg.includes('match')) {
+                        messageText = '[Private key doesn\'t match - this key cannot decrypt messages encrypted with your public key]';
                 } else {
-                  messageText = '[Encrypted - enter recipient PIN]';
+                        messageText = '[Decryption error: ' + errorMsg + ']';
+                      }
+                    }
+                  }
                 }
+              } else {
+                // Legacy AES format - no longer supported, show encrypted message
+                messageText = '[Old AES-encrypted message - no longer supported]';
               }
             } 
             // Handle old unencrypted messages (plain text)
             else if (msg.message) {
               if (typeof msg.message === 'string') {
                 messageText = msg.message;
-              } else if (msg.message.encryptedData) {
-                // Legacy encrypted format (object with encryptedData)
-                if (recipientPin && myPin) {
-                  try {
-                    const decrypted = await decryptMessageClient(msg.message, myPin, recipientPin);
-                    messageText = decrypted || '[Failed to decrypt]';
-                  } catch (e) {
-                    messageText = '[Decryption error]';
-                  }
-                } else {
-                  messageText = '[Encrypted - enter PIN]';
-                }
+              } else if (msg.message.encryptedData || msg.message.iv) {
+                // Legacy encrypted format (AES) - no longer supported
+                messageText = '[Old AES-encrypted message - no longer supported]';
               } else {
                 messageText = '[Invalid message format]';
               }
@@ -773,29 +1367,45 @@
       }
       
       const messageInput = document.getElementById('chatMessageInput');
-      const pinInput = document.getElementById('chatRecipientPin');
       const message = messageInput.value.trim();
-      const recipientPin = pinInput.value;
       
       if (!message) {
         alert('Please enter a message');
         return;
       }
       
-      if (!recipientPin || !/^\d{4}$/.test(recipientPin)) {
-        alert('Please enter a valid 4-digit recipient PIN');
+      try {
+        // Get keys from input fields
+        const senderPrivateKey = document.getElementById('senderPrivateKey').value.trim();
+        const recipientPublicKey = document.getElementById('recipientPublicKey').value.trim();
+        
+        if (!recipientPublicKey) {
+          alert('Please enter recipient\'s public key to send encrypted messages');
         return;
       }
       
-      try {
+        // Encrypt message client-side using recipient's public key
+        let encryptedMessage;
+        try {
+          encryptedMessage = await encryptMessageClient(message, recipientPublicKey);
+          if (!encryptedMessage || !encryptedMessage.encryptedData) {
+            throw new Error('Encryption failed - invalid result');
+          }
+        } catch (encryptError) {
+          console.error('Encryption error:', encryptError);
+          alert('Encryption error: ' + encryptError.message + '\n\nPlease check:\n- Recipient\'s public key is correct\n- Public key format is valid (PEM format)');
+          return;
+        }
+        
         const r = await fetch('/api/chat/send', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'same-origin',
           body: JSON.stringify({
             recipient: currentChatRecipient,
-            message: message,
-            recipientPin: recipientPin
+            message: encryptedMessage.encryptedData, // Send encrypted data array
+            encrypted: true,
+            encryptedFormat: 'rsa-e2e' // End-to-end RSA format
           })
         });
         
@@ -807,6 +1417,7 @@
         messageInput.value = '';
         await loadChatMessages(currentChatRecipient);
       } catch (err) {
+        console.error('Error sending message:', err);
         alert('Error: ' + err.message);
       }
     });
@@ -1118,6 +1729,14 @@
       } catch (e) {
         window.location.href = '/login.html';
         return;
+      }
+
+      // Load user's key pair on initialization
+      try {
+        await loadUserKeys();
+      } catch (error) {
+        console.error('Failed to load user keys:', error);
+        alert('Warning: Failed to load encryption keys. Some features may not work correctly.');
       }
 
       // Show dashboard by default
